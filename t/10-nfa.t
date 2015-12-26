@@ -6,7 +6,7 @@ use warnings;
 use FindBin '$Bin';
 use lib "$Bin/../lib";
 
-use Test::More tests => 10;
+use Test::More tests => 23;
 
 use_ok 'REE::NFA';
 
