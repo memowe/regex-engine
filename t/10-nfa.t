@@ -19,7 +19,7 @@ is $noname->name, 'unnamed NFA', 'right default name';
 my $trivial = REE::NFA->new(name => 'trivial');
 isa_ok $trivial, 'REE::NFA';
 is $trivial->name, 'trivial', 'right name';
-my $trivial_start = $trivial->get_start();
+my $trivial_start = $trivial->start;
 ok $trivial->is_start($trivial_start), 'start state known as start state';
 is $trivial_start, 'q_0', 'right start state name';
 is $trivial_start, $trivial->state, 'current state is start state';
@@ -27,15 +27,15 @@ is $trivial_start, $trivial->state, 'current state is start state';
 # illegal input to trivial dfa
 my $trivial_before = $trivial->state;
 eval {$trivial->consume('a')};
-is $@, "illegal input: 'a'", 'illegal input denied';
+like $@, qr/^illegal input: 'a'/, 'illegal input denied';
 is $trivial->state, $trivial_before, 'input denial: no state transition';
 
 # prepare single character acceptor
 my $a_acceptor = REE::NFA->new(name => 'z acceptor');
 isa_ok $a_acceptor, 'REE::NFA';
 is $a_acceptor->name, 'z acceptor', 'right name';
-my $a_acceptor_start = $a_acceptor->get_start();
-my $a_acceptor_end   = $a_acceptor->add_state();
+my $a_acceptor_start = $a_acceptor->start;
+my $a_acceptor_end   = $a_acceptor->new_state;
 like $a_acceptor_start, qr/^q_(\d+)$/, 'right start state name';
 like $a_acceptor_end, qr/^q_(\d+)$/, 'right final state name';
 isnt $a_acceptor_start, $a_acceptor_end, 'start and final state different';
