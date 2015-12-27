@@ -12,8 +12,7 @@ sub _init_states {
 }
 
 sub get_start {
-    my $self = shift;
-    return $self->states->[0]; # first = start
+    shift->states->[0]; # first = start
 }
 
 sub is_start {
