@@ -12,6 +12,11 @@ has state           => sub {shift->start};
 has _final          => {};
 has _transitions    => {}; # HoH: {q_42 => {a => 'q_17', b => 'q_0'}}
 
+sub rewind {
+    my $self = shift;
+    $self->state($self->start);
+}
+
 sub is_start {
     my ($self, $state) = @_;
     return $state eq $self->start;

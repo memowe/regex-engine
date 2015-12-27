@@ -6,7 +6,7 @@ use warnings;
 use FindBin '$Bin';
 use lib "$Bin/../lib";
 
-use Test::More tests => 28;
+use Test::More tests => 30;
 
 use_ok 'REE::NFA';
 
@@ -49,6 +49,10 @@ $a_acceptor->add_transitions($a_acceptor_start => {z => $a_acceptor_end});
 $a_acceptor->consume('z');
 is $a_acceptor->state, $a_acceptor_end, 'right state after transition';
 ok $a_acceptor->is_done, 'input accepted';
+$a_acceptor->rewind;
+is $a_acceptor->state, $a_acceptor->start, 'rewind successful';
+$a_acceptor->consume('z');
+ok $a_acceptor->is_done, 'same input accepted again';
 
 # trivial nfa
 ok ! $trivial->is_done, 'start state is not final';
