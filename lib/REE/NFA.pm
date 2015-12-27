@@ -15,7 +15,7 @@ sub get_start {
     return $self->states->[0]; # first = start
 }
 
-sub is_start_state {
+sub is_start {
     my ($self, $state) = @_;
     return $state eq $self->get_start;
 }

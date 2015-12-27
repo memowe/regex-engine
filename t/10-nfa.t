@@ -20,21 +20,21 @@ my $trivial = REE::NFA->new(name => 'trivial');
 isa_ok $trivial, 'REE::NFA';
 is $trivial->name, 'trivial', 'right name';
 my $trivial_start = $trivial->get_start();
-ok $trivial->is_start_state($trivial_start), 'start state known as start state';
+ok $trivial->is_start($trivial_start), 'start state known as start state';
 is $trivial_start, 'q_0', 'right start state name';
 is $trivial_start, $trivial->state, 'current state is start state';
 
 # "run" trivial nfa
 ok ! $trivial->is_done, 'start state is not final';
-$trivial->set_final_state($trivial_start);
-ok $trivial->is_final_state($trivial_start), 'start state set to final';
+$trivial->set_final($trivial_start);
+ok $trivial->is_final($trivial_start), 'start state set to final';
 ok $trivial->is_done, 'start state is final';
 $trivial->consume($REE::NFA->epsilon);
 ok $trivial->is_final($trivial->current_state), 'state is still final';
 ok $trivial->is_done, 'state is still final';
 is $trivial_start, $trivial->state, 'no transition';
-$trivial->unset_final_state($trivial_start);
-ok $trivial->is_final_state($trivial_start), 'start state set to not final';
+$trivial->unset_final($trivial_start);
+ok $trivial->is_final($trivial_start), 'start state set to not final';
 ok ! $trivial->is_done, 'start state is not final again';
 
 # illegal input to trivial nfa
@@ -52,7 +52,7 @@ my $a_acceptor_end   = $a_acceptor->add_state();
 like $a_acceptor_start, qr/^q_(\d+)$/, 'right start state name';
 like $a_acceptor_end, qr/^q_(\d+)$/, 'right final state name';
 isnt $a_acceptor_start, $a_acceptor_end, 'start and final state different';
-ok ! $a_acceptor->is_final_state($a_acceptor_start), 'start not final';
-ok ! $a_acceptor->is_final_state($a_acceptor_end), 'end not final';
-$a_acceptor->set_final_state($a_acceptor_end);
-ok $a_acceptor->is_final_state($a_acceptor_end), 'end is final';
+ok ! $a_acceptor->is_final($a_acceptor_start), 'start not final';
+ok ! $a_acceptor->is_final($a_acceptor_end), 'end not final';
+$a_acceptor->set_final($a_acceptor_end);
+ok $a_acceptor->is_final($a_acceptor_end), 'end is final';
