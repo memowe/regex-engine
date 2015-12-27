@@ -29,7 +29,7 @@ ok ! $trivial->is_done, 'start state is not final';
 $trivial->set_final($trivial_start);
 ok $trivial->is_final($trivial_start), 'start state set to final';
 ok $trivial->is_done, 'start state is final';
-$trivial->consume($REE::NFA->epsilon);
+$trivial->consume($REE::NFA::epsilon);
 ok $trivial->is_final($trivial->current_state), 'state is still final';
 ok $trivial->is_done, 'state is still final';
 is $trivial_start, $trivial->state, 'no transition';
