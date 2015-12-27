@@ -10,12 +10,12 @@ use Test::More tests => 25;
 
 use_ok 'REE::NFA';
 
-# prepare noname nfa
+# prepare noname dfa
 my $noname = REE::NFA->new;
 isa_ok $noname, 'REE::NFA';
 is $noname->name, 'unnamed NFA', 'right default name';
 
-# prepare trivial nfa
+# prepare trivial dfa
 my $trivial = REE::NFA->new(name => 'trivial');
 isa_ok $trivial, 'REE::NFA';
 is $trivial->name, 'trivial', 'right name';
@@ -24,20 +24,7 @@ ok $trivial->is_start($trivial_start), 'start state known as start state';
 is $trivial_start, 'q_0', 'right start state name';
 is $trivial_start, $trivial->state, 'current state is start state';
 
-# "run" trivial nfa
-ok ! $trivial->is_done, 'start state is not final';
-$trivial->set_final($trivial_start);
-ok $trivial->is_final($trivial_start), 'start state set to final';
-ok $trivial->is_done, 'start state is final';
-$trivial->consume($REE::NFA::epsilon);
-ok $trivial->is_final($trivial->current_state), 'state is still final';
-ok $trivial->is_done, 'state is still final';
-is $trivial_start, $trivial->state, 'no transition';
-$trivial->unset_final($trivial_start);
-ok $trivial->is_final($trivial_start), 'start state set to not final';
-ok ! $trivial->is_done, 'start state is not final again';
-
-# illegal input to trivial nfa
+# illegal input to trivial dfa
 my $trivial_before = $trivial->state;
 eval {$trivial->consume('a')};
 is $@, "illegal input: 'a'", 'illegal input denied';
@@ -56,3 +43,16 @@ ok ! $a_acceptor->is_final($a_acceptor_start), 'start not final';
 ok ! $a_acceptor->is_final($a_acceptor_end), 'end not final';
 $a_acceptor->set_final($a_acceptor_end);
 ok $a_acceptor->is_final($a_acceptor_end), 'end is final';
+
+# trivial nfa
+ok ! $trivial->is_done, 'start state is not final';
+$trivial->set_final($trivial_start);
+ok $trivial->is_final($trivial_start), 'start state set to final';
+ok $trivial->is_done, 'start state is final';
+$trivial->consume($REE::NFA::epsilon);
+ok $trivial->is_final($trivial->current_state), 'state is still final';
+ok $trivial->is_done, 'state is still final';
+is $trivial_start, $trivial->state, 'no transition';
+$trivial->unset_final($trivial_start);
+ok $trivial->is_final($trivial_start), 'start state set to not final';
+ok ! $trivial->is_done, 'start state is not final again';
