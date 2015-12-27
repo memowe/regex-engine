@@ -6,9 +6,14 @@ use warnings;
 use FindBin '$Bin';
 use lib "$Bin/../lib";
 
-use Test::More tests => 23;
+use Test::More tests => 25;
 
 use_ok 'REE::NFA';
+
+# prepare noname nfa
+my $noname = REE::NFA->new;
+isa_ok $noname, 'REE::NFA';
+is $noname->name, 'unnamed NFA', 'right default name';
 
 # prepare trivial nfa
 my $trivial = REE::NFA->new(name => 'trivial');
