@@ -6,7 +6,7 @@ use warnings;
 use FindBin '$Bin';
 use lib "$Bin/../lib";
 
-use Test::More tests => 25;
+use Test::More tests => 28;
 
 use_ok 'REE::NFA';
 
@@ -43,13 +43,19 @@ ok ! $a_acceptor->is_final($a_acceptor_start), 'start not final';
 ok ! $a_acceptor->is_final($a_acceptor_end), 'end not final';
 $a_acceptor->set_final($a_acceptor_end);
 ok $a_acceptor->is_final($a_acceptor_end), 'end is final';
+eval {$a_acceptor->consume('z')};
+like $@, qr/^illegal input: 'z'/, 'transition not known yet';
+$a_acceptor->add_transitions($a_acceptor_start => {z => $a_acceptor_end});
+$a_acceptor->consume('z');
+is $a_acceptor->state, $a_acceptor_end, 'right state after transition';
+ok $a_acceptor->is_done, 'input accepted';
 
 # trivial nfa
 ok ! $trivial->is_done, 'start state is not final';
 $trivial->set_final($trivial_start);
 ok $trivial->is_final($trivial_start), 'start state set to final';
 ok $trivial->is_done, 'start state is final';
-$trivial->consume($REE::NFA::epsilon);
+$trivial->consume($REE::NFA::eps);
 ok $trivial->is_final($trivial->current_state), 'state is still final';
 ok $trivial->is_done, 'state is still final';
 is $trivial_start, $trivial->state, 'no transition';

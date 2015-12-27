@@ -1,23 +1,20 @@
 package REE::NFA;
-use REE::Mo qw(default builder);
+use REE::Mo 'default';
+
+use Carp;
+
+our $eps = '#eps#';
 
 has name            => 'unnamed NFA';
-has states          => (builder => '_init_states');
-has _state_counter  => 1;
-has state           => sub {shift->get_start};
+has start           => 'q_0';
+has _state_num      => 0;
+has state           => sub {shift->start};
 has _final          => {};
-
-sub _init_states {
-    shift->states(['q_0']);
-}
-
-sub get_start {
-    shift->states->[0]; # first = start
-}
+has _transitions    => {}; # HoH: {q_42 => {a => 'q_17', b => 'q_0'}}
 
 sub is_start {
     my ($self, $state) = @_;
-    return $state eq $self->get_start;
+    return $state eq $self->start;
 }
 
 sub set_final {
@@ -38,6 +35,38 @@ sub is_final {
 sub is_done {
     my $self = shift;
     return $self->is_final($self->state);
+}
+
+sub new_state {
+    my ($self, $name) = @_;
+
+    # generate name
+    my $num = $self->_state_num;
+    $name //= 'q_' . ++$num;
+    $self->_state_num($num);
+
+    # not neccessary to remember that name since states are saved
+    # implicitely via transitions
+    return $name;
+}
+
+sub add_transitions {
+    my ($self, $state, $trans) = @_;
+    $self->_transitions->{$state}{$_} = $trans->{$_} for keys %$trans;
+}
+
+sub consume {
+    my ($self, $input) = @_;
+
+    # available transitions
+    my %transitions = %{$self->_transitions->{$self->state} // {}};
+
+    # illegal input?
+    croak "illegal input: '\Q$input\E'"
+        unless exists $transitions{$input};
+
+    # input ok: update state
+    $self->state($transitions{$input});
 }
 
 1;
