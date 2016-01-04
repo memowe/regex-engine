@@ -106,6 +106,14 @@ sub consume {
 
     # input ok: update state
     $self->state($next_state{$input});
+
+    # allow chain call (useful for testing)
+    return $self;
+}
+
+sub consume_string {
+    my ($self, $input) = @_;
+    $self->consume($_) for split // => $input;
 }
 
 1;
