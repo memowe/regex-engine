@@ -6,7 +6,7 @@ use Carp;
 our $eps = '#eps#';
 
 has name            => 'unnamed NFA';
-has start           => 'q_0';
+has start           => 'q_000';
 has _state_num      => 0;
 has state           => sub {shift->start};
 has _final          => {};
