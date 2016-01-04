@@ -10,7 +10,7 @@ has start           => 'q_000';
 has _state_num      => 0;
 has state           => sub {shift->start};
 has _final          => {};
-has _transitions    => {}; # HoH: {q_42 => {a => 'q_17', b => 'q_0'}}
+has _transitions    => sub {+{shift->start => {}}};
 
 sub rewind {
     my $self = shift;
@@ -56,8 +56,8 @@ sub new_state {
     # assign name
     $name //= $self->_generate_state_name;
 
-    # not neccessary to remember that name since states are saved
-    # implicitely via transitions
+    # done
+    $self->_transitions->{$name} //= {};
     return $name;
 }
 
