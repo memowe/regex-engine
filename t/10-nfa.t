@@ -50,8 +50,8 @@ $a_acceptor->set_final($a_acceptor_end);
 ok $a_acceptor->is_final($a_acceptor_end), 'end is final';
 is $a_acceptor->to_string, <<"END", 'right stringification';
 z acceptor:
-q_000 (start):
-q_001 (final):
+$a_acceptor_start (start):
+$a_acceptor_end (final):
 END
 is "$a_acceptor", $a_acceptor->to_string, 'consistent stringification';
 eval {$a_acceptor->consume('z')};
@@ -59,9 +59,9 @@ like $@, qr/^illegal input: 'z'/, 'transition not known yet';
 $a_acceptor->add_transitions($a_acceptor_start => {z => $a_acceptor_end});
 is $a_acceptor->to_string, <<"END", 'right stringification';
 z acceptor:
-q_000 (start):
-    z -> q_001
-q_001 (final):
+$a_acceptor_start (start):
+    z -> $a_acceptor_end
+$a_acceptor_end (final):
 END
 is "$a_acceptor", $a_acceptor->to_string, 'consistent stringification';
 $a_acceptor->consume('z');
