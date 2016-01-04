@@ -42,13 +42,19 @@ sub is_done {
     return $self->is_final($self->state);
 }
 
+sub _generate_state_name {
+    my $self = shift;
+    my $num  = $self->_state_num;
+    my $name = 'q_' . sprintf '%03d' => ++$num;
+    $self->_state_num($num);
+    return $name;
+}
+
 sub new_state {
     my ($self, $name) = @_;
 
-    # generate name
-    my $num = $self->_state_num;
-    $name //= 'q_' . ++$num;
-    $self->_state_num($num);
+    # assign name
+    $name //= $self->_generate_state_name;
 
     # not neccessary to remember that name since states are saved
     # implicitely via transitions
