@@ -72,6 +72,63 @@ is $a_acceptor->state, $a_acceptor->start, 'rewind successful';
 $a_acceptor->consume('z');
 ok $a_acceptor->is_done, 'same input accepted again';
 
+# non-trivial dfa: /^[ab]*cd+$/
+my $abcd = REE::NFA->new(name => 'abcd sth acceptor');
+my $abcd_start = $abcd->start;
+my $abcd_got_c = $abcd->new_state;
+my $abcd_got_d = $abcd->new_state;
+$abcd->set_final($abcd_got_d);
+$abcd->add_transitions($abcd_start => {
+    a => $abcd_start,
+    b => $abcd_start,
+    c => $abcd_got_c,
+});
+$abcd->add_transitions($abcd_got_c => {
+    d => $abcd_got_d,
+});
+$abcd->add_transitions($abcd_got_d => {
+    d => $abcd_got_d,
+});
+is $abcd->to_string, <<"END", 'created the right automaton';
+abcd sth acceptor:
+$abcd_start (start):
+    a -> $abcd_start
+    b -> $abcd_start
+    c -> $abcd_got_c
+$abcd_got_c:
+    d -> $abcd_got_d
+$abcd_got_d (final):
+    d -> $abcd_got_d
+END
+$abcd->consume_string('cd');
+ok $abcd->is_done, '"cd" consumed successfully';
+$abcd->rewind;
+$abcd->consume_string('ababcd');
+ok $abcd->is_done, '"ababcd" consumed successfully';
+$abcd->rewind;
+$abcd->consume_string('aaacd');
+ok $abcd->is_done, '"aaacd" consumed successfully';
+$abcd->rewind;
+$abcd->consume_string('cddd');
+ok $abcd->is_done, '"cddd" consumed successfully';
+$abcd->rewind;
+$abcd->consume_string('bbbabbaaabacdd');
+ok $abcd->is_done, '"bbbabbaaabacdd" consumed successfully';
+$abcd->rewind;
+$abcd->consume_string('');
+ok ! $abcd->is_done, 'not done (substring)';
+$abcd->consume('c');
+ok ! $abcd->is_done, 'not done (substring)';
+$abcd->consume_string('ddd');
+ok $abcd->is_done, 'done consuming step by step';
+$abcd->consume('d');
+ok $abcd->is_done, 'done consuming legal input after final';
+$abcd->rewind;
+eval {$abcd->consume('d')};
+like $@, qr/^illegal input: 'd'/, 'final input illegal at the beginning';
+$abcd->consume('c')->consume('d');
+ok $abcd->is_done, 'continued parsing of a valid sequence after exception';
+
 # trivial nfa
 ok ! $trivial->is_done, 'start state is not final';
 $trivial->set_final($trivial_start);
