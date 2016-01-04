@@ -64,14 +64,14 @@ sub consume {
     my ($self, $input) = @_;
 
     # available transitions
-    my %transitions = %{$self->_transitions->{$self->state} // {}};
+    my %next_state = %{$self->_transitions->{$self->state} // {}};
 
     # illegal input?
     croak "illegal input: '\Q$input\E'"
-        unless exists $transitions{$input};
+        unless exists $next_state{$input};
 
     # input ok: update state
-    $self->state($transitions{$input});
+    $self->state($next_state{$input});
 }
 
 1;
