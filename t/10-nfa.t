@@ -14,6 +14,11 @@ use_ok 'REE::NFA';
 my $noname = REE::NFA->new;
 isa_ok $noname, 'REE::NFA';
 is $noname->name, 'unnamed NFA', 'right default name';
+is $noname->to_string, <<"END", 'right stringification';
+unnamed NFA:
+q_000 (start):
+END
+is "$noname", $noname->to_string, 'consistent stringification';
 
 # prepare trivial dfa
 my $trivial = REE::NFA->new(name => 'trivial');
@@ -43,9 +48,22 @@ ok ! $a_acceptor->is_final($a_acceptor_start), 'start not final';
 ok ! $a_acceptor->is_final($a_acceptor_end), 'end not final';
 $a_acceptor->set_final($a_acceptor_end);
 ok $a_acceptor->is_final($a_acceptor_end), 'end is final';
+is $a_acceptor->to_string, <<"END", 'right stringification';
+z acceptor:
+q_000 (start):
+q_001 (final):
+END
+is "$a_acceptor", $a_acceptor->to_string, 'consistent stringification';
 eval {$a_acceptor->consume('z')};
 like $@, qr/^illegal input: 'z'/, 'transition not known yet';
 $a_acceptor->add_transitions($a_acceptor_start => {z => $a_acceptor_end});
+is $a_acceptor->to_string, <<"END", 'right stringification';
+z acceptor:
+q_000 (start):
+    z -> q_001
+q_001 (final):
+END
+is "$a_acceptor", $a_acceptor->to_string, 'consistent stringification';
 $a_acceptor->consume('z');
 is $a_acceptor->state, $a_acceptor_end, 'right state after transition';
 ok $a_acceptor->is_done, 'input accepted';

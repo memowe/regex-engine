@@ -12,6 +12,8 @@ has state           => sub {shift->start};
 has _final          => {};
 has _transitions    => sub {+{shift->start => {}}};
 
+use overload '""' => \&to_string;
+
 sub rewind {
     my $self = shift;
     $self->state($self->start);
@@ -64,6 +66,32 @@ sub new_state {
 sub add_transitions {
     my ($self, $state, $trans) = @_;
     $self->_transitions->{$state}{$_} = $trans->{$_} for keys %$trans;
+}
+
+sub to_string {
+    my $self = shift;
+    my $output = $self->name . ":\n";
+
+    # stringify states
+    for my $state (sort keys %{$self->_transitions}) {
+        $output .= $state;
+
+        # state attributes
+        my @attrs = (
+            ($self->is_start($state) ? 'start' : ()),
+            ($self->is_final($state) ? 'final' : ()),
+        );
+        $output .= ' (' . join(', ' => @attrs) . ')' if @attrs;
+
+        # stringify transitions
+        $output .= ":\n";
+        my %next_state = %{$self->_transitions->{$state} // {}};
+        $output .= "    $_ -> $next_state{$_}\n"
+            for sort keys %next_state;
+    }
+
+    # done
+    return $output;
 }
 
 sub consume {
