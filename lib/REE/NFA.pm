@@ -6,8 +6,8 @@ use Carp;
 our $eps = '#eps#';
 
 has name            => 'unnamed NFA';
-has start           => 'q_000';
-has _state_num      => 0;
+has start           => sub {shift->_generate_state_name};
+has _state_num      => -1;
 has state           => sub {shift->start};
 has _final          => {};
 has _transitions    => sub {+{shift->start => {}}};
