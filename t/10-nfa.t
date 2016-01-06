@@ -2,11 +2,12 @@
 
 use strict;
 use warnings;
+use experimental 'smartmatch';
 
 use FindBin '$Bin';
 use lib "$Bin/../lib";
 
-use Test::More tests => 30;
+use Test::More tests => 46;
 
 use_ok 'REE::NFA';
 
@@ -130,14 +131,28 @@ $abcd->consume('c')->consume('d');
 ok $abcd->is_done, 'continued parsing of a valid sequence after exception';
 
 # trivial nfa
-ok ! $trivial->is_done, 'start state is not final';
-$trivial->set_final($trivial_start);
-ok $trivial->is_final($trivial_start), 'start state set to final';
-ok $trivial->is_done, 'start state is final';
-$trivial->consume($REE::NFA::eps);
-ok $trivial->is_final($trivial->current_state), 'state is still final';
-ok $trivial->is_done, 'state is still final';
-is $trivial_start, $trivial->state, 'no transition';
-$trivial->unset_final($trivial_start);
-ok $trivial->is_final($trivial_start), 'start state set to not final';
-ok ! $trivial->is_done, 'start state is not final again';
+my $nfa = REE::NFA->new(name => 'trivial nfa');
+my $nfa_start = $nfa->start;
+my $nfa_next  = $nfa->new_state;
+my $nfa_final = $nfa->new_state;
+$nfa->set_final($nfa_final);
+$nfa->add_transitions($nfa_start => {
+    a               => $nfa_next,
+    $REE::NFA::eps  => $nfa_next,
+});
+$nfa->add_transitions($nfa_next => {a => $nfa_final});
+is "$nfa", <<"END", 'right nfa';
+trivial nfa:
+$nfa_start (start):
+    $REE::NFA::eps -> $nfa_next
+    a -> $nfa_next
+$nfa_next:
+    a -> $nfa_final
+$nfa_final (final):
+END
+$nfa->consume_string('a');
+ok $nfa->is_done, 'nfa-parsed a string successfully';
+my @states = $nfa->current_states;
+is scalar @states, 2, 'nfa is in two states at the same time';
+ok $nfa_next ~~ @states, 'intermediate state is current';
+ok $nfa_final ~~ @states, 'final state is current';

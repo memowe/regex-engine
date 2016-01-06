@@ -5,43 +5,99 @@ use Carp;
 
 our $eps = '#eps#';
 
-has name            => 'unnamed NFA';
-has start           => sub {shift->_generate_state_name};
-has _state_num      => -1;
-has state           => sub {shift->start};
-has _final          => {};
-has _transitions    => sub {+{shift->start => {}}};
-
-use overload '""' => \&to_string;
-
-sub rewind {
-    my $self = shift;
-    $self->state($self->start);
-}
+has initialized => 0;
+has name        => 'unnamed NFA';
+has start       => sub {shift->_generate_state_name};
+has _state_num  => -1;
+has _states     => sub {+{shift->start => {
+    final       => 0,
+    current     => 1,
+    transitions => {},
+}}};
 
 sub is_start {
     my ($self, $state) = @_;
     return $state eq $self->start;
 }
 
+sub all_states {
+    my $self = shift;
+    return keys %{$self->_states};
+}
+
+sub final_states {
+    my $self = shift;
+    return grep {$self->_states->{$_}{final}} keys %{$self->_states};
+}
+
 sub set_final {
     my ($self, $state) = @_;
-    $self->_final->{$state} = 1;
+    $self->_states->{$state}{final} = 1;
 }
 
 sub unset_final {
     my ($self, $state) = @_;
-    $self->_final->{$state} = '';
+    $self->_states->{$state}{final} = 0;
 }
 
 sub is_final {
     my ($self, $state) = @_;
-    return $self->_final->{$state};
+    return $self->_states->{$state}{final};
+}
+
+sub current_states {
+    my $self = shift;
+    return grep {$self->_states->{$_}{current}} keys %{$self->_states};
+}
+
+sub set_current {
+    my ($self, $state) = @_;
+    $self->_states->{$state}{current} = 1;
+}
+
+sub unset_current {
+    my ($self, $state) = @_;
+    $self->_states->{$state}{current} = 0;
+}
+
+sub no_current {
+    my $self = shift;
+    $self->unset_current($_) for $self->current_states;
+}
+
+sub is_current {
+    my ($self, $state) = @_;
+    return $self->_states->{$state}{current};
+}
+
+# DFA shorthand: returns a single value if only one current state
+sub current_state {
+    my $self = shift;
+    my @current = $self->current_states;
+    return $current[0] if @current == 1;
+    return \@current;
 }
 
 sub is_done {
     my $self = shift;
-    return $self->is_final($self->state);
+
+    # check if one final state is current
+    for my $final ($self->final_states) {
+        return 1 if $self->is_current($final);
+    }
+
+    # nothing found
+    return;
+}
+
+sub get_transitions {
+    my ($self, $state) = @_;
+    return %{$self->_states->{$state}{transitions}};
+}
+
+sub add_transitions {
+    my ($self, $state, $trans) = @_;
+    $self->_states->{$state}{transitions}{$_} = $trans->{$_} for keys %$trans;
 }
 
 sub _generate_state_name {
@@ -59,21 +115,17 @@ sub new_state {
     $name //= $self->_generate_state_name;
 
     # done
-    $self->_transitions->{$name} //= {};
+    $self->_states->{$name} = {current => 0, final => 0, transitions => {}};
     return $name;
 }
 
-sub add_transitions {
-    my ($self, $state, $trans) = @_;
-    $self->_transitions->{$state}{$_} = $trans->{$_} for keys %$trans;
-}
-
+use overload '""' => \&to_string;
 sub to_string {
     my $self = shift;
     my $output = $self->name . ":\n";
 
     # stringify states
-    for my $state (sort keys %{$self->_transitions}) {
+    for my $state (sort keys %{$self->_states}) {
         $output .= $state;
 
         # state attributes
@@ -85,7 +137,7 @@ sub to_string {
 
         # stringify transitions
         $output .= ":\n";
-        my %next_state = %{$self->_transitions->{$state} // {}};
+        my %next_state = %{$self->_states->{$state}{transitions}};
         $output .= "    $_ -> $next_state{$_}\n"
             for sort keys %next_state;
     }
@@ -94,20 +146,68 @@ sub to_string {
     return $output;
 }
 
+sub init {
+    my $self = shift;
+
+    # set current = true iff start state
+    $self->no_current;
+    $self->set_current($self->start);
+
+    # initial epsilon transitions
+    $self->_eps_splits($self->start);
+
+    # done
+    $self->initialized(1);
+}
+
+sub _eps_splits {
+    my ($self, $state) = @_;
+
+    # nothing to do
+    return if not $self->is_current($state)
+        or not exists $self->_states->{$state}{transitions}{$eps};
+
+    # epsilon transition available
+    my $next = $self->_states->{$state}{transitions}{$eps};
+
+    # next state already current
+    return if $self->is_current($next);
+
+    # epsilon transition
+    $self->set_current($next);
+    $self->_eps_splits($next);
+}
+
 sub consume {
     my ($self, $input) = @_;
 
-    # available transitions
-    my %next_state = %{$self->_transitions->{$self->state} // {}};
+    # initialized?
+    $self->init unless $self->initialized;
 
-    # illegal input?
-    croak "illegal input: '\Q$input\E'"
-        unless exists $next_state{$input};
+    # prepare
+    my @current = $self->current_states;
+    $self->no_current;
 
-    # input ok: update state
-    $self->state($next_state{$input});
+    # try transitions on all states
+    for my $state (@current) {
+        my %transitions = $self->get_transitions($state);
 
-    # allow chain call (useful for testing)
+        # no transition available here
+        next unless exists $transitions{$input};
+
+        # transition available
+        my $next = $transitions{$input};
+        $self->set_current($next);
+        $self->_eps_splits($next);
+    }
+
+    # no transitions found: step back and complain
+    unless ($self->current_states) {
+        $self->set_current($_) for @current;
+        croak "illegal input: '\Q$input\E'";
+    }
+
+    # allow chain call
     return $self;
 }
 
