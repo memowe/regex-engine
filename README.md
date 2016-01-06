@@ -3,7 +3,7 @@ REE - Regular Expression Engine
 
 ## License and Copyright
 
-Copyright 2015 Mirko Westermeier.
+Copyright 2016 Mirko Westermeier.
 
 This program is distributed under the [MIT (X11) License](http://www.opensource.org/licenses/mit-license.php) 
 
