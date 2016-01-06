@@ -1,6 +1,7 @@
 package REE::NFA;
 use REE::Mo 'default';
 
+use utf8;
 use Carp;
 
 our $eps = '#eps#';
@@ -141,8 +142,11 @@ sub to_string {
         # stringify transitions
         $output .= ":\n";
         my %next_state = %{$self->_states->{$state}{transitions}};
-        $output .= "    $_ -> $next_state{$_}\n"
-            for sort keys %next_state;
+        for my $input (sort keys %next_state) {
+            my $next_state = $next_state{$input};
+            $input = 'ε' if $input eq $eps;
+            $output .= "    $input -> $next_state\n"
+        }
     }
 
     # done
