@@ -18,7 +18,7 @@ isa_ok $noname, 'REE::NFA';
 is $noname->name, 'unnamed NFA', 'right default name';
 is $noname->to_string, <<"END", 'right stringification';
 unnamed NFA:
-* q_000 (start):
+* q_0 (start):
 END
 is "$noname", $noname->to_string, 'consistent stringification';
 
@@ -28,7 +28,7 @@ isa_ok $trivial, 'REE::NFA';
 is $trivial->name, 'trivial', 'right name';
 my $trivial_start = $trivial->start;
 ok $trivial->is_start($trivial_start), 'start state known as start state';
-is $trivial_start, 'q_000', 'right start state name';
+is $trivial_start, 'q_0', 'right start state name';
 is $trivial_start, $trivial->current_state, 'current state is start state';
 
 # illegal input to trivial dfa

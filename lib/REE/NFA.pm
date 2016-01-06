@@ -1,20 +1,22 @@
 package REE::NFA;
-use REE::Mo 'default';
+use REE::Mo qw(default build);
 
 use utf8;
 use Carp;
+use List::Util 'max';
 
 our $eps = '#eps#';
 
-has initialized => 0;
-has name        => 'unnamed NFA';
-has start       => sub {shift->_generate_state_name};
-has _state_num  => -1;
-has _states     => sub {+{shift->start => {
-    final       => 0,
-    current     => 1,
-    transitions => {},
-}}};
+has _initialized    => 0;
+has _states         => {};
+has name            => 'unnamed NFA';
+has 'start';
+
+sub BUILD {
+    my $self = shift;
+    $self->start($self->new_state);
+    $self->set_current($self->start);
+}
 
 sub is_start {
     my ($self, $state) = @_;
@@ -101,21 +103,20 @@ sub add_transitions {
     $self->_states->{$state}{transitions}{$_} = $trans->{$_} for keys %$trans;
 }
 
+sub _max_state_index {
+    my $self = shift;
+    return -1 unless keys %{$self->_states}; # no states yet
+    return max map {$_ =~ /(\d+)/; $1} keys %{$self->_states};
+}
+
 sub _generate_state_name {
     my $self = shift;
-    my $num  = $self->_state_num;
-    my $name = 'q_' . sprintf '%03d' => ++$num;
-    $self->_state_num($num);
-    return $name;
+    return 'q_' . ($self->_max_state_index + 1);
 }
 
 sub new_state {
-    my ($self, $name) = @_;
-
-    # assign name
-    $name //= $self->_generate_state_name;
-
-    # done
+    my $self = shift;
+    my $name = $self->_generate_state_name;
     $self->_states->{$name} = {current => 0, final => 0, transitions => {}};
     return $name;
 }
@@ -126,7 +127,9 @@ sub to_string {
     my $output = $self->name . ":\n";
 
     # stringify states
-    for my $state (sort keys %{$self->_states}) {
+    my @state_names = keys %{$self->_states};
+    my %state_num   = map {/(\d+)/; ($_ => $1)} @state_names;
+    for my $state (sort {$state_num{$a} <=> $state_num{$b}} @state_names) {
 
         # current state marker
         $output .= '* ' if $self->is_current($state);
@@ -164,7 +167,7 @@ sub init {
     $self->_eps_splits($self->start);
 
     # done
-    $self->initialized(1);
+    $self->_initialized(1);
 }
 
 sub _eps_splits {
@@ -189,7 +192,7 @@ sub consume {
     my ($self, $input) = @_;
 
     # initialized?
-    $self->init unless $self->initialized;
+    $self->init unless $self->_initialized;
 
     # prepare
     my @current = $self->current_states;
