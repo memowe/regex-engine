@@ -27,13 +27,13 @@ is $trivial->name, 'trivial', 'right name';
 my $trivial_start = $trivial->start;
 ok $trivial->is_start($trivial_start), 'start state known as start state';
 is $trivial_start, 'q_000', 'right start state name';
-is $trivial_start, $trivial->state, 'current state is start state';
+is $trivial_start, $trivial->current_state, 'current state is start state';
 
 # illegal input to trivial dfa
-my $trivial_before = $trivial->state;
+my $trivial_before = $trivial->current_state;
 eval {$trivial->consume('a')};
 like $@, qr/^illegal input: 'a'/, 'illegal input denied';
-is $trivial->state, $trivial_before, 'input denial: no state transition';
+is $trivial->current_state, $trivial_before, 'illegal input: no transition';
 
 # prepare single character acceptor
 my $a_acceptor = REE::NFA->new(name => 'z acceptor');
@@ -65,10 +65,10 @@ $a_acceptor_end (final):
 END
 is "$a_acceptor", $a_acceptor->to_string, 'consistent stringification';
 $a_acceptor->consume('z');
-is $a_acceptor->state, $a_acceptor_end, 'right state after transition';
+is $a_acceptor->current_state, $a_acceptor_end, 'right state after transition';
 ok $a_acceptor->is_done, 'input accepted';
-$a_acceptor->rewind;
-is $a_acceptor->state, $a_acceptor->start, 'rewind successful';
+$a_acceptor->init;
+is $a_acceptor->current_state, $a_acceptor->start, 'rewind successful';
 $a_acceptor->consume('z');
 ok $a_acceptor->is_done, 'same input accepted again';
 
@@ -102,19 +102,19 @@ $abcd_got_d (final):
 END
 $abcd->consume_string('cd');
 ok $abcd->is_done, '"cd" consumed successfully';
-$abcd->rewind;
+$abcd->init;
 $abcd->consume_string('ababcd');
 ok $abcd->is_done, '"ababcd" consumed successfully';
-$abcd->rewind;
+$abcd->init;
 $abcd->consume_string('aaacd');
 ok $abcd->is_done, '"aaacd" consumed successfully';
-$abcd->rewind;
+$abcd->init;
 $abcd->consume_string('cddd');
 ok $abcd->is_done, '"cddd" consumed successfully';
-$abcd->rewind;
+$abcd->init;
 $abcd->consume_string('bbbabbaaabacdd');
 ok $abcd->is_done, '"bbbabbaaabacdd" consumed successfully';
-$abcd->rewind;
+$abcd->init;
 $abcd->consume_string('');
 ok ! $abcd->is_done, 'not done (substring)';
 $abcd->consume('c');
