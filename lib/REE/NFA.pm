@@ -126,6 +126,9 @@ sub to_string {
 
     # stringify states
     for my $state (sort keys %{$self->_states}) {
+
+        # current state marker
+        $output .= '* ' if $self->is_current($state);
         $output .= $state;
 
         # state attributes

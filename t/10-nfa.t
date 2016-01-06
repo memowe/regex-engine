@@ -7,7 +7,7 @@ use experimental 'smartmatch';
 use FindBin '$Bin';
 use lib "$Bin/../lib";
 
-use Test::More tests => 46;
+use Test::More tests => 47;
 
 use_ok 'REE::NFA';
 
@@ -17,7 +17,7 @@ isa_ok $noname, 'REE::NFA';
 is $noname->name, 'unnamed NFA', 'right default name';
 is $noname->to_string, <<"END", 'right stringification';
 unnamed NFA:
-q_000 (start):
+* q_000 (start):
 END
 is "$noname", $noname->to_string, 'consistent stringification';
 
@@ -51,7 +51,7 @@ $a_acceptor->set_final($a_acceptor_end);
 ok $a_acceptor->is_final($a_acceptor_end), 'end is final';
 is $a_acceptor->to_string, <<"END", 'right stringification';
 z acceptor:
-$a_acceptor_start (start):
+* $a_acceptor_start (start):
 $a_acceptor_end (final):
 END
 is "$a_acceptor", $a_acceptor->to_string, 'consistent stringification';
@@ -60,7 +60,7 @@ like $@, qr/^illegal input: 'z'/, 'transition not known yet';
 $a_acceptor->add_transitions($a_acceptor_start => {z => $a_acceptor_end});
 is $a_acceptor->to_string, <<"END", 'right stringification';
 z acceptor:
-$a_acceptor_start (start):
+* $a_acceptor_start (start):
     z -> $a_acceptor_end
 $a_acceptor_end (final):
 END
@@ -92,7 +92,7 @@ $abcd->add_transitions($abcd_got_d => {
 });
 is $abcd->to_string, <<"END", 'created the right automaton';
 abcd sth acceptor:
-$abcd_start (start):
+* $abcd_start (start):
     a -> $abcd_start
     b -> $abcd_start
     c -> $abcd_got_c
@@ -143,7 +143,7 @@ $nfa->add_transitions($nfa_start => {
 $nfa->add_transitions($nfa_next => {a => $nfa_final});
 is "$nfa", <<"END", 'right nfa';
 trivial nfa:
-$nfa_start (start):
+* $nfa_start (start):
     $REE::NFA::eps -> $nfa_next
     a -> $nfa_next
 $nfa_next:
@@ -156,3 +156,12 @@ my @states = $nfa->current_states;
 is scalar @states, 2, 'nfa is in two states at the same time';
 ok $nfa_next ~~ @states, 'intermediate state is current';
 ok $nfa_final ~~ @states, 'final state is current';
+is "$nfa", <<"END", 'right multi-current stringification';
+trivial nfa:
+$nfa_start (start):
+    $REE::NFA::eps -> $nfa_next
+    a -> $nfa_next
+* $nfa_next:
+    a -> $nfa_final
+* $nfa_final (final):
+END
