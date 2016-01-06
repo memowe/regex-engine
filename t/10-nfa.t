@@ -3,6 +3,7 @@
 use strict;
 use warnings;
 use experimental 'smartmatch';
+use utf8;
 
 use FindBin '$Bin';
 use lib "$Bin/../lib";
@@ -144,7 +145,7 @@ $nfa->add_transitions($nfa_next => {a => $nfa_final});
 is "$nfa", <<"END", 'right nfa';
 trivial nfa:
 * $nfa_start (start):
-    $REE::NFA::eps -> $nfa_next
+    ε -> $nfa_next
     a -> $nfa_next
 $nfa_next:
     a -> $nfa_final
@@ -159,7 +160,7 @@ ok $nfa_final ~~ @states, 'final state is current';
 is "$nfa", <<"END", 'right multi-current stringification';
 trivial nfa:
 $nfa_start (start):
-    $REE::NFA::eps -> $nfa_next
+    ε -> $nfa_next
     a -> $nfa_next
 * $nfa_next:
     a -> $nfa_final
