@@ -1,5 +1,6 @@
 package REE::RE::Alternation;
 use REE::Mo 'required';
+extends 'REE::RE';
 
 has res => (required => 1);
 
