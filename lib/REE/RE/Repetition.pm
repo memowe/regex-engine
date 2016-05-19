@@ -8,7 +8,7 @@ sub to_string {
     my ($self, $indent) = @_;
     $indent //= '';
 
-    my $output = $indent . "REPETITION: \n";
+    my $output = $indent . "REPETITION:\n";
     $output .= $self->re->to_string("$indent    ");
     return $output;
 }
