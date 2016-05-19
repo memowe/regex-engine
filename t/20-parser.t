@@ -6,6 +6,8 @@ use warnings;
 use FindBin '$Bin';
 use lib "$Bin/../lib";
 
-use Test::More tests => 0;
+use Test::More tests => 1;
+
+pass('dummy test');
 
 __END__
