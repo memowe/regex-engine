@@ -30,7 +30,7 @@ sub all_states {
 
 sub final_states {
     my $self = shift;
-    return grep {$self->_states->{$_}{final}} keys %{$self->_states};
+    return grep $self->_states->{$_}{final} => $self->all_states;
 }
 
 sub set_final {
@@ -50,7 +50,7 @@ sub is_final {
 
 sub current_states {
     my $self = shift;
-    return grep {$self->_states->{$_}{current}} keys %{$self->_states};
+    return grep $self->_states->{$_}{current} => $self->all_states;
 }
 
 sub set_current {
@@ -73,11 +73,10 @@ sub is_current {
     return $self->_states->{$state}{current};
 }
 
-# DFA shorthand: returns a single value if only one current state
 sub current_state {
     my $self = shift;
     my @current = $self->current_states;
-    return $current[0] if @current == 1;
+    return $current[0] if @current == 1; # DFA shorthand
     return \@current;
 }
 
