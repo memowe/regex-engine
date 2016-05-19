@@ -12,3 +12,8 @@ sub to_regex {
     my $self = shift;
     die "implement in subclass!\n";
 }
+
+sub simplified {
+    my $self = shift;
+    return $self;
+}

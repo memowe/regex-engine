@@ -20,3 +20,14 @@ sub to_regex {
     my $combined = join '|' => map $_->to_regex => @{$self->res};
     return "($combined)";
 }
+
+sub simplified {
+    my $self = shift;
+
+    # only one re: no alternation
+    return $self->res->[0]->simplified if @{$self->res} == 1;
+
+    # simplify all sub-regexes
+    $self->res([map $_->simplified => @{$self->res}]);
+    return $self;
+}
