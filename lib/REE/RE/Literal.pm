@@ -9,3 +9,8 @@ sub to_string {
     $indent //= '';
     return $indent . 'LITERAL: "' . quotemeta($self->value) . '"' . "\n";
 }
+
+sub to_regex {
+    my $self = shift;
+    return $self->value;
+}

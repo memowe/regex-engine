@@ -14,3 +14,9 @@ sub to_string {
 
     return $output;
 }
+
+sub to_regex {
+    my $self = shift;
+    my $combined = join '' => map $_->to_regex => @{$self->res};
+    return "($combined)";
+}
