@@ -9,8 +9,8 @@ sub to_string {
     $indent //= '';
 
     my $output = $indent . "ALTERNATION: (\n";
-    $output .= $_->to_string("$indent    ") . "\n" for @{$self->res};
-    $output .= $indent . ")";
+    $output .= $_->to_string("$indent    ") for @{$self->res};
+    $output .= $indent . ")\n";
 
     return $output;
 }
