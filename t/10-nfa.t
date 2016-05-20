@@ -5,9 +5,6 @@ use warnings;
 use experimental 'smartmatch';
 use utf8;
 
-use FindBin '$Bin';
-use lib "$Bin/../lib";
-
 use Test::More tests => 47;
 
 use_ok 'REE::NFA';
