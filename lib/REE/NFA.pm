@@ -97,9 +97,22 @@ sub get_transitions {
     return %{$self->_states->{$state}{transitions}};
 }
 
+sub add_transition {
+    my ($self, $state, $input, $next) = @_;
+
+    # prepare state/transition data
+    my $s = $self->_states->{$state};
+    $s->{transitions}{$input} = [] unless defined $s->{transitions}{$input};
+    my $t = $s->{transitions}{$input};
+
+    # non-deterministic transition: unify, deterministic: append
+    $next   = [$next] if ref $next ne 'ARRAY';
+    @$t     = keys %{{ map {$_ => 1} @$t, @$next }};
+}
+
 sub add_transitions {
     my ($self, $state, $trans) = @_;
-    $self->_states->{$state}{transitions}{$_} = $trans->{$_} for keys %$trans;
+    $self->add_transition($state, $_, $trans->{$_}) for keys %$trans;
 }
 
 sub _max_state_index {
@@ -125,7 +138,7 @@ sub to_string {
     my $self = shift;
     my $output = $self->name . ":\n";
 
-    # stringify states
+    # stringify states (ordered by state number)
     my @state_names = keys %{$self->_states};
     my %state_num   = map {/(\d+)/; ($_ => $1)} @state_names;
     for my $state (sort {$state_num{$a} <=> $state_num{$b}} @state_names) {
@@ -145,9 +158,9 @@ sub to_string {
         $output .= ":\n";
         my %next_state = %{$self->_states->{$state}{transitions}};
         for my $input (sort keys %next_state) {
-            my $next_state = $next_state{$input};
-            $input = 'ε' if $input eq $eps;
-            $output .= "    $input -> $next_state\n"
+            my $i = $input eq $eps ? 'ε' : $input;
+            $output .= "    $i -> ";
+            $output .= join(', ' => sort @{$next_state{$input} // []}) . "\n";
         }
     }
 
@@ -177,14 +190,13 @@ sub _eps_splits {
         or not exists $self->_states->{$state}{transitions}{$eps};
 
     # epsilon transition available
-    my $next = $self->_states->{$state}{transitions}{$eps};
+    my @next_states = @{$self->_states->{$state}{transitions}{$eps}};
 
-    # next state already current
-    return if $self->is_current($next);
-
-    # epsilon transition
-    $self->set_current($next);
-    $self->_eps_splits($next);
+    # epsilon transitions
+    for my $next (@next_states) {
+        $self->set_current($next);
+        $self->_eps_splits($next);
+    }
 }
 
 sub consume {
@@ -205,9 +217,11 @@ sub consume {
         next unless exists $transitions{$input};
 
         # transition available
-        my $next = $transitions{$input};
-        $self->set_current($next);
-        $self->_eps_splits($next);
+        my @next_states = @{$transitions{$input}};
+        for my $next (@next_states) {
+            $self->set_current($next);
+            $self->_eps_splits($next);
+        }
     }
 
     # no transitions found: step back and complain
