@@ -128,38 +128,38 @@ like $@, qr/^illegal input: 'd'/, 'final input illegal at the beginning';
 $abcd->consume('c')->consume('d');
 ok $abcd->is_done, 'continued parsing of a valid sequence after exception';
 
-# trivial nfa
-my $nfa = REE::NFA->new(name => 'trivial nfa');
-my $nfa_start = $nfa->start;
-my $nfa_next  = $nfa->new_state;
-my $nfa_final = $nfa->new_state;
-$nfa->set_final($nfa_final);
-$nfa->add_transitions($nfa_start => {
-    a               => $nfa_next,
-    $REE::NFA::eps  => $nfa_next,
+# trivial ε-nfa
+my $enfa = REE::NFA->new(name => 'trivial ε-nfa');
+my $enfa_start = $enfa->start;
+my $enfa_next  = $enfa->new_state;
+my $enfa_final = $enfa->new_state;
+$enfa->set_final($enfa_final);
+$enfa->add_transitions($enfa_start => {
+    a               => $enfa_next,
+    $REE::NFA::eps  => $enfa_next,
 });
-$nfa->add_transitions($nfa_next => {a => $nfa_final});
-is "$nfa", <<"END", 'right nfa';
-trivial nfa:
-* $nfa_start (start):
-    ε -> $nfa_next
-    a -> $nfa_next
-$nfa_next:
-    a -> $nfa_final
-$nfa_final (final):
+$enfa->add_transitions($enfa_next => {a => $enfa_final});
+is "$enfa", <<"END", 'right enfa';
+trivial ε-nfa:
+* $enfa_start (start):
+    ε -> $enfa_next
+    a -> $enfa_next
+$enfa_next:
+    a -> $enfa_final
+$enfa_final (final):
 END
-$nfa->consume_string('a');
-ok $nfa->is_done, 'nfa-parsed a string successfully';
-my @states = $nfa->current_states;
-is scalar @states, 2, 'nfa is in two states at the same time';
-ok $nfa_next ~~ @states, 'intermediate state is current';
-ok $nfa_final ~~ @states, 'final state is current';
-is "$nfa", <<"END", 'right multi-current stringification';
-trivial nfa:
-$nfa_start (start):
-    ε -> $nfa_next
-    a -> $nfa_next
-* $nfa_next:
-    a -> $nfa_final
-* $nfa_final (final):
+$enfa->consume_string('a');
+ok $enfa->is_done, 'enfa-parsed a string successfully';
+my @states = $enfa->current_states;
+is scalar @states, 2, 'enfa is in two states at the same time';
+ok $enfa_next ~~ @states, 'intermediate state is current';
+ok $enfa_final ~~ @states, 'final state is current';
+is "$enfa", <<"END", 'right multi-current stringification';
+trivial ε-nfa:
+$enfa_start (start):
+    ε -> $enfa_next
+    a -> $enfa_next
+* $enfa_next:
+    a -> $enfa_final
+* $enfa_final (final):
 END
