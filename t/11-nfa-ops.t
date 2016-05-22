@@ -36,7 +36,37 @@ ok $a_repetition->is_current($a_rep_start), 'again in start state';
 $a_repetition->consume_string('a');
 ok ! $a_repetition->is_done, 'not done after (ab)+a';
 
-# TODO alternation
+# prepare alternation
+my $a1 = REE::NFA->new(name => 'ab-acceptor');
+my $a1_start    = $a1->start;
+my $a1_next     = $a1->new_state;
+my $a1_end      = $a1->new_state;
+$a1->add_transition($a1_start, a => $a1_next);
+$a1->add_transition($a1_next, b => $a1_end);
+$a1->set_final($a1_end);
+my $a2 = REE::NFA->new(name => 'cd-acceptor');
+my $a2_start    = $a2->start;
+my $a2_next     = $a2->new_state;
+my $a2_end      = $a2->new_state;
+$a2->add_transition($a2_start, c => $a2_next);
+$a2->add_transition($a2_next, d => $a2_end);
+$a2->set_final($a2_end);
+
+# test alternation preparation
+$a1->consume_string('ab');
+ok $a1->is_done, 'consumed ab';
+$a2->consume_string('cd');
+ok $a2->is_done, 'consumed cd';
+
+# test alternation
+my $alternation = $a1->alternate($a2);
+$alternation->consume_string('ab');
+ok $alternation->is_done('consumed ab');
+eval {$alternation->consume_string('cd'); fail("didn't die")};
+$alternation->init;
+$alternation->consume_string('cd');
+ok $alternation->is_done('consumed cd');
+eval {$alternation->consume_string('ab'); fail("didn't die")};
 
 # TODO sequence
 
