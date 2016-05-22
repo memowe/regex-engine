@@ -5,7 +5,7 @@ use warnings;
 use experimental 'smartmatch';
 use utf8;
 
-use Test::More tests => 47;
+use Test::More tests => 54;
 
 use_ok 'REE::NFA';
 
@@ -128,6 +128,32 @@ like $@, qr/^illegal input: 'd'/, 'final input illegal at the beginning';
 $abcd->consume('c')->consume('d');
 ok $abcd->is_done, 'continued parsing of a valid sequence after exception';
 
+# trivial nfa
+my $nfa = REE::NFA->new(name => 'trivial nfa');
+my $nfa_start   = $nfa->start;
+my $nfa_end     = $nfa->new_state;
+$nfa->set_final($nfa_end);
+$nfa->add_transitions($nfa_start => {a => [$nfa_start, $nfa_end]});
+is "$nfa", <<"END", 'created the right automaton';
+trivial nfa:
+* $nfa_start (start):
+    a -> $nfa_start, $nfa_end
+$nfa_end (final):
+END
+is $nfa->current_state, $nfa_start, 'right start state';
+$nfa->consume('a');
+my @states = $nfa->current_states;
+is scalar @states, 2, 'nfa is in two states at the same time';
+ok $nfa_start ~~ @states, 'start state is current';
+ok $nfa_end ~~ @states, 'end state is current';
+ok $nfa->is_done, 'one state is final';
+is "$nfa", <<"END", 'right finalized nfa';
+trivial nfa:
+* $nfa_start (start):
+    a -> $nfa_start, $nfa_end
+* $nfa_end (final):
+END
+
 # trivial ε-nfa
 my $enfa = REE::NFA->new(name => 'trivial ε-nfa');
 my $enfa_start = $enfa->start;
@@ -150,7 +176,7 @@ $enfa_final (final):
 END
 $enfa->consume_string('a');
 ok $enfa->is_done, 'enfa-parsed a string successfully';
-my @states = $enfa->current_states;
+@states = $enfa->current_states;
 is scalar @states, 2, 'enfa is in two states at the same time';
 ok $enfa_next ~~ @states, 'intermediate state is current';
 ok $enfa_final ~~ @states, 'final state is current';
