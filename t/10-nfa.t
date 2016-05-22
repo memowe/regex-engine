@@ -5,7 +5,7 @@ use warnings;
 use experimental 'smartmatch';
 use utf8;
 
-use Test::More tests => 47;
+use Test::More tests => 54;
 
 use_ok 'REE::NFA';
 
@@ -130,36 +130,62 @@ ok $abcd->is_done, 'continued parsing of a valid sequence after exception';
 
 # trivial nfa
 my $nfa = REE::NFA->new(name => 'trivial nfa');
-my $nfa_start = $nfa->start;
-my $nfa_next  = $nfa->new_state;
-my $nfa_final = $nfa->new_state;
-$nfa->set_final($nfa_final);
-$nfa->add_transitions($nfa_start => {
-    a               => $nfa_next,
-    $REE::NFA::eps  => $nfa_next,
-});
-$nfa->add_transitions($nfa_next => {a => $nfa_final});
-is "$nfa", <<"END", 'right nfa';
+my $nfa_start   = $nfa->start;
+my $nfa_end     = $nfa->new_state;
+$nfa->set_final($nfa_end);
+$nfa->add_transitions($nfa_start => {a => [$nfa_start, $nfa_end]});
+is "$nfa", <<"END", 'created the right automaton';
 trivial nfa:
 * $nfa_start (start):
-    ε -> $nfa_next
-    a -> $nfa_next
-$nfa_next:
-    a -> $nfa_final
-$nfa_final (final):
+    a -> $nfa_start, $nfa_end
+$nfa_end (final):
 END
-$nfa->consume_string('a');
-ok $nfa->is_done, 'nfa-parsed a string successfully';
+is $nfa->current_state, $nfa_start, 'right start state';
+$nfa->consume('a');
 my @states = $nfa->current_states;
 is scalar @states, 2, 'nfa is in two states at the same time';
-ok $nfa_next ~~ @states, 'intermediate state is current';
-ok $nfa_final ~~ @states, 'final state is current';
-is "$nfa", <<"END", 'right multi-current stringification';
+ok $nfa_start ~~ @states, 'start state is current';
+ok $nfa_end ~~ @states, 'end state is current';
+ok $nfa->is_done, 'one state is final';
+is "$nfa", <<"END", 'right finalized nfa';
 trivial nfa:
-$nfa_start (start):
-    ε -> $nfa_next
-    a -> $nfa_next
-* $nfa_next:
-    a -> $nfa_final
-* $nfa_final (final):
+* $nfa_start (start):
+    a -> $nfa_start, $nfa_end
+* $nfa_end (final):
+END
+
+# trivial ε-nfa
+my $enfa = REE::NFA->new(name => 'trivial ε-nfa');
+my $enfa_start = $enfa->start;
+my $enfa_next  = $enfa->new_state;
+my $enfa_final = $enfa->new_state;
+$enfa->set_final($enfa_final);
+$enfa->add_transitions($enfa_start => {
+    a               => $enfa_next,
+    $REE::NFA::eps  => $enfa_next,
+});
+$enfa->add_transitions($enfa_next => {a => $enfa_final});
+is "$enfa", <<"END", 'right enfa';
+trivial ε-nfa:
+* $enfa_start (start):
+    ε -> $enfa_next
+    a -> $enfa_next
+$enfa_next:
+    a -> $enfa_final
+$enfa_final (final):
+END
+$enfa->consume_string('a');
+ok $enfa->is_done, 'enfa-parsed a string successfully';
+@states = $enfa->current_states;
+is scalar @states, 2, 'enfa is in two states at the same time';
+ok $enfa_next ~~ @states, 'intermediate state is current';
+ok $enfa_final ~~ @states, 'final state is current';
+is "$enfa", <<"END", 'right multi-current stringification';
+trivial ε-nfa:
+$enfa_start (start):
+    ε -> $enfa_next
+    a -> $enfa_next
+* $enfa_next:
+    a -> $enfa_final
+* $enfa_final (final):
 END
