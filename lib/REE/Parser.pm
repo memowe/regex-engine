@@ -25,10 +25,10 @@ sub _next_char {
 sub parse {
     my ($self, $input) = @_;
     $self->_input($input);
-    return $self->parse_alternation;
+    return $self->_parse_alternation;
 }
 
-sub parse_alternation {
+sub _parse_alternation {
     my $self = shift;
 
     # parse sequences
@@ -43,7 +43,7 @@ sub parse_alternation {
 
         # sub-alternation
         elsif ($c eq '(') {
-            $buffer = $self->parse_alternation;
+            $buffer = $self->_parse_alternation;
         }
 
         # alternation finished
