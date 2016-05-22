@@ -36,7 +36,7 @@ ok $a_repetition->is_current($a_rep_start), 'again in start state';
 $a_repetition->consume_string('a');
 ok ! $a_repetition->is_done, 'not done after (ab)+a';
 
-# prepare alternation
+# prepare alternation/sequence
 my $a1 = REE::NFA->new(name => 'ab-acceptor');
 my $a1_start    = $a1->start;
 my $a1_next     = $a1->new_state;
@@ -52,7 +52,7 @@ $a2->add_transition($a2_start, c => $a2_next);
 $a2->add_transition($a2_next, d => $a2_end);
 $a2->set_final($a2_end);
 
-# test alternation preparation
+# test alternation/sequence preparation
 $a1->consume_string('ab');
 ok $a1->is_done, 'consumed ab';
 $a2->consume_string('cd');
@@ -68,6 +68,12 @@ $alternation->consume_string('cd');
 ok $alternation->is_done('consumed cd');
 eval {$alternation->consume_string('ab'); fail("didn't die")};
 
-# TODO sequence
+# test sequence
+my $sequence = $a1->append($a2);
+eval {$sequence->consume_string('cd'); fail("didn't die")};
+$sequence->consume_string('ab');
+eval {$sequence->consume_string('ab'); fail("didn't die")};
+$sequence->consume_string('cd');
+ok $sequence->is_done, 'sequence accepted';
 
 __END__
