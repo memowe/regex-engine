@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 1;
+use Test::More tests => 10;
 
 use REE::NFA;
 
@@ -24,7 +24,7 @@ like $@, qr/^illegal input: 'a'/, 'consuming "ab" again is illegal';
 
 # test repetition
 my $a_repetition = $a->repetition;
-my $a_rep_start = $a_repetition->get_start;
+my $a_rep_start = $a_repetition->start;
 ok ! $a_repetition->is_done, 'a* ready for input';
 $a_repetition->consume_string('ab');
 ok $a_repetition->is_done, 'ab accepted';

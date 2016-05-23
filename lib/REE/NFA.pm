@@ -267,5 +267,18 @@ sub consume_string {
     $self->consume($_) for split // => $input;
 }
 
+sub repetition {
+    my $self = shift;
+    my $new  = $self->clone;
+
+    # connect final with start
+    my @final = grep {$new->is_final($_)} $new->all_states;
+    $new->add_transition($_, $eps => $new->start) for @final;
+
+    # done
+    $new->init;
+    return $new;
+}
+
 1;
 __END__
