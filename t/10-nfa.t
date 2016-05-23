@@ -5,7 +5,7 @@ use warnings;
 use experimental 'smartmatch';
 use utf8;
 
-use Test::More tests => 54;
+use Test::More tests => 58;
 
 use_ok 'REE::NFA';
 
@@ -70,6 +70,11 @@ $a_acceptor->init;
 is $a_acceptor->current_state, $a_acceptor->start, 'rewind successful';
 $a_acceptor->consume('z');
 ok $a_acceptor->is_done, 'same input accepted again';
+my $a_a_clone = $a_acceptor->clone;
+ok $a_acceptor->_states->{$a_acceptor_start}{transitions}
+    != $a_a_clone->_states->{$a_acceptor_start}{transitions},
+    'different transition data';
+is "$a_acceptor", "$a_a_clone", 'same stringification';
 
 # non-trivial dfa: /^[ab]*cd+$/
 my $abcd = REE::NFA->new(name => 'abcd sth acceptor');
@@ -127,6 +132,11 @@ eval {$abcd->consume('d'); fail("didn't die of illegal input")};
 like $@, qr/^illegal input: 'd'/, 'final input illegal at the beginning';
 $abcd->consume('c')->consume('d');
 ok $abcd->is_done, 'continued parsing of a valid sequence after exception';
+my $abcd_clone = $abcd->clone;
+ok $abcd->_states->{$abcd_start}{transitions}
+    != $abcd_clone->_states->{$abcd_start}{transitions},
+    'different transition data';
+is "$abcd", "$abcd_clone", 'same stringification';
 
 # trivial nfa
 my $nfa = REE::NFA->new(name => 'trivial nfa');

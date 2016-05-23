@@ -18,6 +18,34 @@ sub BUILD {
     $self->set_current($self->start);
 }
 
+sub clone {
+    my $self = shift;
+
+    # copy simple data
+    my $new  = REE::NFA->new(
+        name            => $self->name,
+        start           => $self->start,
+        _initialized    => $self->_initialized,
+    );
+
+    # copy state data
+    for my $state ($self->all_states) {
+        $new->_states->{$state} = {
+            current     => $self->is_current($state),
+            final       => $self->is_final($state),
+            transitions => {},
+        };
+        my $data = $self->_states->{$state};
+        for my $input (keys %{$data->{transitions}}) {
+            $new->_states->{$state}{transitions}{$input}
+                = [@{$data->{transitions}{$input}}];
+        }
+    }
+
+    # done
+    return $new;
+}
+
 sub is_start {
     my ($self, $state) = @_;
     return $state eq $self->start;
