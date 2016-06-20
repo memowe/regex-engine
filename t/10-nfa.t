@@ -5,7 +5,8 @@ use warnings;
 use experimental 'smartmatch';
 use utf8;
 
-use Test::More tests => 54;
+use Test::More tests => 79;
+use Scalar::Util 'refaddr';
 
 use_ok 'REE::NFA';
 
@@ -70,6 +71,11 @@ $a_acceptor->init;
 is $a_acceptor->current_state, $a_acceptor->start, 'rewind successful';
 $a_acceptor->consume('z');
 ok $a_acceptor->is_done, 'same input accepted again';
+my $a_a_clone = $a_acceptor->clone;
+ok $a_acceptor->_states->{$a_acceptor_start}{transitions}
+    != $a_a_clone->_states->{$a_acceptor_start}{transitions},
+    'different transition data';
+is "$a_acceptor", "$a_a_clone", 'same stringification';
 
 # non-trivial dfa: /^[ab]*cd+$/
 my $abcd = REE::NFA->new(name => 'abcd sth acceptor');
@@ -127,6 +133,11 @@ eval {$abcd->consume('d'); fail("didn't die of illegal input")};
 like $@, qr/^illegal input: 'd'/, 'final input illegal at the beginning';
 $abcd->consume('c')->consume('d');
 ok $abcd->is_done, 'continued parsing of a valid sequence after exception';
+my $abcd_clone = $abcd->clone;
+ok $abcd->_states->{$abcd_start}{transitions}
+    != $abcd_clone->_states->{$abcd_start}{transitions},
+    'different transition data';
+is "$abcd", "$abcd_clone", 'same stringification';
 
 # trivial nfa
 my $nfa = REE::NFA->new(name => 'trivial nfa');
@@ -189,3 +200,65 @@ $enfa_start (start):
     a -> $enfa_final
 * $enfa_final (final):
 END
+
+# arbitrary state names
+my $foobar = REE::NFA->new(name => 'foobar automaton');
+my $state = $foobar->new_state('17');
+$foobar->add_transition($state, 42, 666);
+is "$foobar", <<"END", 'right arbitrary state stringification';
+foobar automaton:
+* q_0 (start):
+17:
+    42 -> 666
+END
+
+# clone
+my $ab_acceptor = REE::NFA->new(name => 'xnorfzt');
+my $aba_start   = $ab_acceptor->start;
+my $aba_next    = $ab_acceptor->new_state;
+my $aba_final   = $ab_acceptor->new_state;
+$ab_acceptor->set_final($aba_final);
+$ab_acceptor->add_transition($aba_start => a => $aba_next);
+$ab_acceptor->add_transition($aba_next  => b => $aba_final);
+
+my $ab_acceptor_rx = qr/xnorfzt:
+\* (\S+) \(start\):
+    a -> (\S+)
+\2:
+    b -> (\S+)
+\3 \(final\):
+/;
+ok "$ab_acceptor" =~ $ab_acceptor_rx, 'right ab acceptor';
+is $1, $aba_start, 'right start state';
+is $2, $aba_next, 'right next state';
+is $3, $aba_final, 'right final state';
+
+my $clone = $ab_acceptor->clone();
+ok "$clone" =~ $ab_acceptor_rx, 'right clone stringification';
+is "$ab_acceptor", "$clone", 'identical string representation';
+ok refaddr $ab_acceptor != refaddr $clone, 'different objects';
+
+$clone->consume_string("ab");
+ok $clone->is_done, 'clone consumed "ab"';
+ok ! $ab_acceptor->is_done, 'original did not';
+
+# ... with different state indices
+my $mutant = $ab_acceptor->clone(42);
+isnt "$mutant", "$clone", 'different string representation';
+ok "$mutant" =~ $ab_acceptor_rx, 'right ab acceptor';
+isnt $1, $aba_start, 'another start state';
+isnt $2, $aba_next, 'another next state';
+isnt $3, $aba_final, 'another final state';
+like $1, qr/42/, 'first state contains 42';
+
+ok $mutant->is_current($mutant->start), 'mutant is in start state';
+$mutant->consume_string("ab");
+ok $mutant->is_done, 'clone consumed "ab"';
+
+$mutant->init;
+$mutant->consume('a');
+ok ! $mutant->is_done, 'clone is not done after consuming "a"';
+eval {$mutant->consume('a'); fail("didn't die of illegal input")};
+like $@, qr/^illegal input: 'a'/, 'consuming another "a" is illegal';
+$mutant->consume('b');
+ok $mutant->is_done, 'clone is done after consuming "b"';

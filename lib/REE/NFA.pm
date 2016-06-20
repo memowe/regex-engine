@@ -18,6 +18,47 @@ sub BUILD {
     $self->set_current($self->start);
 }
 
+# clones this automaton
+# an index state names offset can be given as argument
+sub clone {
+    my $self    = shift;
+    my $offset  = shift // 0;
+
+    # state name translation
+    my %st = map {
+        $_ => $self->_add_to_state_name($_, $offset)
+    } $self->all_states;
+
+    # copy simple data
+    my $new = REE::NFA->new(
+        name            => $self->name,
+        _initialized    => $self->_initialized,
+    );
+
+    # cleanup after BUILD (neccessary to overwrite default start state)
+    $new->_states({});
+
+    # restore start
+    $new->start($st{$self->start});
+
+    # copy state data
+    for my $state ($self->all_states) {
+        $new->_states->{$st{$state}} = {
+            current     => $self->is_current($state),
+            final       => $self->is_final($state),
+            transitions => {},
+        };
+        my $data = $self->_states->{$state};
+        for my $input (keys %{$data->{transitions}}) {
+            $new->_states->{$st{$state}}{transitions}{$input}
+                = [map {$st{$_}} @{$data->{transitions}{$input}}];
+        }
+    }
+
+    # done
+    return $new;
+}
+
 sub is_start {
     my ($self, $state) = @_;
     return $state eq $self->start;
@@ -126,9 +167,15 @@ sub _generate_state_name {
     return 'q_' . ($self->_max_state_index + 1);
 }
 
+sub _add_to_state_name {
+    my ($self, $state, $add) = @_;
+    die "unknown state name: $state\n" unless $state =~ /^q_(\d+)$/;
+    return 'q_' . ($1 + $add);
+}
+
 sub new_state {
     my $self = shift;
-    my $name = $self->_generate_state_name;
+    my $name = shift // $self->_generate_state_name;
     $self->_states->{$name} = {current => 0, final => 0, transitions => {}};
     return $name;
 }
@@ -237,6 +284,84 @@ sub consume {
 sub consume_string {
     my ($self, $input) = @_;
     $self->consume($_) for split // => $input;
+}
+
+sub repetition {
+    my $self = shift;
+    my $new  = $self->clone;
+
+    # connect final with start
+    my @final = grep {$new->is_final($_)} $new->all_states;
+    $new->add_transition($_, $eps => $new->start) for @final;
+
+    # done
+    $new->init;
+    return $new;
+}
+
+sub alternate {
+    my $self    = shift;
+    my $other   = shift;
+
+    # translate
+    my $s = $self->clone(1); # default start is q_0
+    my $o = $other->clone($s->_max_state_index + 1);
+
+    # prepare alternation nfa
+    my $alternation = REE::NFA->new(
+        name => 'alternation of ' . $s->name . ' and ' . $o->name,
+    );
+
+    # add transitions of parts
+    for my $state ($s->all_states) {
+        $alternation->new_state($state);
+        $alternation->add_transitions($state, {$s->get_transitions($state)});
+        $alternation->set_final($state) if $s->is_final($state)
+    }
+    for my $state ($o->all_states) {
+        $alternation->new_state($state);
+        $alternation->add_transitions($state, {$o->get_transitions($state)});
+        $alternation->set_final($state) if $o->is_final($state)
+    }
+
+    # connect
+    $alternation->add_transitions($alternation->start => {
+        $eps => [$s->start, $o->start],
+    });
+
+    # done
+    return $alternation;
+}
+
+sub append {
+    my $self    = shift;
+    my $other   = shift;
+
+    # translate the other
+    my $o = $other->clone($self->_max_state_index + 1);
+
+    # prepare sequence
+    my $sequence = $self->clone;
+    $sequence->name(
+        'sequence of ' . $self->name . ' and ' . $o->name
+    );
+
+    # connect (and remove final)
+    for my $state ($sequence->all_states) {
+        next unless $sequence->is_final($state);
+        $sequence->add_transitions($state, {$eps, $o->start});
+        $sequence->unset_final($state);
+    }
+
+    # add other transitions
+    for my $state ($o->all_states) {
+        $sequence->new_state($state);
+        $sequence->add_transitions($state, {$o->get_transitions($state)});
+        $sequence->set_final($state) if $o->is_final($state);
+    }
+
+    # done
+    return $sequence;
 }
 
 1;
