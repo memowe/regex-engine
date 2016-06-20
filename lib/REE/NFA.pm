@@ -330,6 +330,7 @@ sub alternate {
     });
 
     # done
+    $alternation->init;
     return $alternation;
 }
 
@@ -361,6 +362,7 @@ sub append {
     }
 
     # done
+    $sequence->init;
     return $sequence;
 }
 
