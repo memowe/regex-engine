@@ -71,10 +71,13 @@ eval {$alternation->consume_string('ab'); fail("didn't die")};
 like $@, qr/^illegal input: 'a'/, 'consuming "ab" now is illegal';
 
 # test sequence
+$a1->init; $a2->init;
 my $sequence = $a1->append($a2);
 eval {$sequence->consume_string('cd'); fail("didn't die")};
+like $@, qr/^illegal input: 'c'/, 'starting with "cd" is illegal';
 $sequence->consume_string('ab');
 eval {$sequence->consume_string('ab'); fail("didn't die")};
+like $@, qr/^illegal input: 'a'/, 'appending "ab" to "ab" is illegal';
 $sequence->consume_string('cd');
 ok $sequence->is_done, 'sequence accepted';
 
