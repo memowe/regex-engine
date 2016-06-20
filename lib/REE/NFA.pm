@@ -299,5 +299,40 @@ sub repetition {
     return $new;
 }
 
+sub alternate {
+    my $self    = shift;
+    my $other   = shift;
+
+    # translate
+    my $s = $self->clone(1); # default start is q_0
+    my $o = $other->clone($s->_max_state_index + 1);
+
+    # prepare alternation nfa
+    my $alternation = REE::NFA->new(
+        name => 'alternation of ' . $s->name . ' and ' . $o->name,
+    );
+
+    # add transitions of parts
+    for my $state ($s->all_states) {
+        $alternation->new_state($state);
+        $alternation->add_transitions($state, {$s->get_transitions($state)});
+        $alternation->set_final($state) if $s->is_final($state)
+    }
+    for my $state ($o->all_states) {
+        $alternation->new_state($state);
+        $alternation->add_transitions($state, {$o->get_transitions($state)});
+        $alternation->set_final($state) if $o->is_final($state)
+    }
+
+    # connect
+    $alternation->add_transitions($alternation->start => {
+        $eps => [$s->start, $o->start],
+    });
+
+    # done
+    return $alternation;
+}
+
+
 1;
 __END__
