@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 14;
+use Test::More tests => 17;
 
 use REE::NFA;
 

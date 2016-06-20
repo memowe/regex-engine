@@ -333,6 +333,36 @@ sub alternate {
     return $alternation;
 }
 
+sub append {
+    my $self    = shift;
+    my $other   = shift;
+
+    # translate the other
+    my $o = $other->clone($self->_max_state_index + 1);
+
+    # prepare sequence
+    my $sequence = $self->clone;
+    $sequence->name(
+        'sequence of ' . $self->name . ' and ' . $o->name
+    );
+
+    # connect (and remove final)
+    for my $state ($sequence->all_states) {
+        next unless $sequence->is_final($state);
+        $sequence->add_transitions($state, {$eps, $o->start});
+        $sequence->unset_final($state);
+    }
+
+    # add other transitions
+    for my $state ($o->all_states) {
+        $sequence->new_state($state);
+        $sequence->add_transitions($state, {$o->get_transitions($state)});
+        $sequence->set_final($state) if $o->is_final($state);
+    }
+
+    # done
+    return $sequence;
+}
 
 1;
 __END__
