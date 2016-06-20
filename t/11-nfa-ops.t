@@ -61,12 +61,14 @@ ok $a2->is_done, 'consumed cd';
 # test alternation
 my $alternation = $a1->alternate($a2);
 $alternation->consume_string('ab');
-ok $alternation->is_done('consumed ab');
+ok $alternation->is_done('consumed ab'), 'alternation consumed "ab"';
 eval {$alternation->consume_string('cd'); fail("didn't die")};
+like $@, qr/^illegal input: 'c'/, 'consuming "cd" now is illegal';
 $alternation->init;
 $alternation->consume_string('cd');
-ok $alternation->is_done('consumed cd');
+ok $alternation->is_done('consumed cd'), 'alternation consumed "cd"';
 eval {$alternation->consume_string('ab'); fail("didn't die")};
+like $@, qr/^illegal input: 'a'/, 'consuming "ab" now is illegal';
 
 # test sequence
 my $sequence = $a1->append($a2);
