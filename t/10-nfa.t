@@ -5,7 +5,8 @@ use warnings;
 use experimental 'smartmatch';
 use utf8;
 
-use Test::More tests => 58;
+use Test::More tests => 78;
+use Scalar::Util 'refaddr';
 
 use_ok 'REE::NFA';
 
@@ -199,3 +200,54 @@ $enfa_start (start):
     a -> $enfa_final
 * $enfa_final (final):
 END
+
+# clone
+my $ab_acceptor = REE::NFA->new(name => 'xnorfzt');
+my $aba_start   = $ab_acceptor->start;
+my $aba_next    = $ab_acceptor->new_state;
+my $aba_final   = $ab_acceptor->new_state;
+$ab_acceptor->set_final($aba_final);
+$ab_acceptor->add_transition($aba_start => a => $aba_next);
+$ab_acceptor->add_transition($aba_next  => b => $aba_final);
+
+my $ab_acceptor_rx = qr/xnorfzt:
+\* (\S+) \(start\):
+    a -> (\S+)
+\2:
+    b -> (\S+)
+\3 \(final\):
+/;
+ok "$ab_acceptor" =~ $ab_acceptor_rx, 'right ab acceptor';
+is $1, $aba_start, 'right start state';
+is $2, $aba_next, 'right next state';
+is $3, $aba_final, 'right final state';
+
+my $clone = $ab_acceptor->clone();
+ok "$clone" =~ $ab_acceptor_rx, 'right clone stringification';
+is "$ab_acceptor", "$clone", 'identical string representation';
+ok refaddr $ab_acceptor != refaddr $clone, 'different objects';
+
+$clone->consume_string("ab");
+ok $clone->is_done, 'clone consumed "ab"';
+ok ! $ab_acceptor->is_done, 'original did not';
+
+# ... with different state indices
+my $mutant = $ab_acceptor->clone(42);
+isnt "$mutant", "$clone", 'different string representation';
+ok "$mutant" =~ $ab_acceptor_rx, 'right ab acceptor';
+isnt $1, $aba_start, 'another start state';
+isnt $2, $aba_next, 'another next state';
+isnt $3, $aba_final, 'another final state';
+like $1, qr/42/, 'first state contains 42';
+
+ok $mutant->is_current($mutant->start), 'mutant is in start state';
+$mutant->consume_string("ab");
+ok $mutant->is_done, 'clone consumed "ab"';
+
+$mutant->init;
+$mutant->consume('a');
+ok ! $mutant->is_done, 'clone is not done after consuming "a"';
+eval {$mutant->consume('a'); fail("didn't die of illegal input")};
+like $@, qr/^illegal input: 'a'/, 'consuming another "a" is illegal';
+$mutant->consume('b');
+ok $mutant->is_done, 'clone is done after consuming "b"';

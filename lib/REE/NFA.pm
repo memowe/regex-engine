@@ -18,27 +18,40 @@ sub BUILD {
     $self->set_current($self->start);
 }
 
+# clones this automaton
+# an index state names offset can be given as argument
 sub clone {
-    my $self = shift;
+    my $self    = shift;
+    my $offset  = shift // 0;
+
+    # state name translation
+    my %st = map {
+        $_ => $self->_add_to_state_name($_, $offset)
+    } $self->all_states;
 
     # copy simple data
-    my $new  = REE::NFA->new(
+    my $new = REE::NFA->new(
         name            => $self->name,
-        start           => $self->start,
         _initialized    => $self->_initialized,
     );
 
+    # cleanup after BUILD (neccessary to overwrite default start state)
+    $new->_states({});
+
+    # restore start
+    $new->start($st{$self->start});
+
     # copy state data
     for my $state ($self->all_states) {
-        $new->_states->{$state} = {
+        $new->_states->{$st{$state}} = {
             current     => $self->is_current($state),
             final       => $self->is_final($state),
             transitions => {},
         };
         my $data = $self->_states->{$state};
         for my $input (keys %{$data->{transitions}}) {
-            $new->_states->{$state}{transitions}{$input}
-                = [@{$data->{transitions}{$input}}];
+            $new->_states->{$st{$state}}{transitions}{$input}
+                = [map {$st{$_}} @{$data->{transitions}{$input}}];
         }
     }
 
@@ -152,6 +165,12 @@ sub _max_state_index {
 sub _generate_state_name {
     my $self = shift;
     return 'q_' . ($self->_max_state_index + 1);
+}
+
+sub _add_to_state_name {
+    my ($self, $state, $add) = @_;
+    die "unknown state name: $state\n" unless $state =~ /^q_(\d+)$/;
+    return 'q_' . ($1 + $add);
 }
 
 sub new_state {
