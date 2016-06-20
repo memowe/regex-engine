@@ -175,7 +175,7 @@ sub _add_to_state_name {
 
 sub new_state {
     my $self = shift;
-    my $name = $self->_generate_state_name;
+    my $name = shift // $self->_generate_state_name;
     $self->_states->{$name} = {current => 0, final => 0, transitions => {}};
     return $name;
 }

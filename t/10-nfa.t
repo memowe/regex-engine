@@ -5,7 +5,7 @@ use warnings;
 use experimental 'smartmatch';
 use utf8;
 
-use Test::More tests => 78;
+use Test::More tests => 79;
 use Scalar::Util 'refaddr';
 
 use_ok 'REE::NFA';
@@ -199,6 +199,17 @@ $enfa_start (start):
 * $enfa_next:
     a -> $enfa_final
 * $enfa_final (final):
+END
+
+# arbitrary state names
+my $foobar = REE::NFA->new(name => 'foobar automaton');
+my $state = $foobar->new_state('17');
+$foobar->add_transition($state, 42, 666);
+is "$foobar", <<"END", 'right arbitrary state stringification';
+foobar automaton:
+* q_0 (start):
+17:
+    42 -> 666
 END
 
 # clone
