@@ -171,10 +171,12 @@ my $enfa_start = $enfa->start;
 my $enfa_next  = $enfa->new_state;
 my $enfa_final = $enfa->new_state;
 $enfa->set_final($enfa_final);
-$enfa->add_transitions($enfa_start => {
-    a               => $enfa_next,
-    $REE::NFA::eps  => $enfa_next,
-});
+do { no warnings 'once';
+    $enfa->add_transitions($enfa_start => {
+        a               => $enfa_next,
+        $REE::NFA::eps  => $enfa_next,
+    });
+};
 $enfa->add_transitions($enfa_next => {a => $enfa_final});
 is "$enfa", <<"END", 'right enfa';
 trivial ε-nfa:
