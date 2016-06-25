@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use utf8;
 
-use Test::More tests => 14;
+use Test::More tests => 23;
 
 use REE::RE::Literal;
 use REE::RE::Repetition;
@@ -44,5 +44,31 @@ $lit_snow_nfa->init;
 ok "$lit_snow_nfa" =~ $literal_acceptor_rx, 'right literal acceptor';
 isnt $1, $3, 'two different states';
 is $2, '❤', 'accepts only one heart input';
+
+# how a repetition of a literal acceptor should look like
+my $repetition_acceptor_rx = qr/^[^:]*:
+\* (\S+) \(start, final\):
+    (.) -> (\S+)
+\3 \(final\):
+    ε -> \1
+$/;
+
+# test a repetition
+my $rep = REE::RE::Repetition->new(re => REE::RE::Literal->new(value => 'a'));
+my $rep_nfa = $rep->compile();
+isa_ok $rep_nfa, 'REE::NFA', 'got an automaton';
+ok $rep_nfa->is_done, 'empty word accepted';
+$rep_nfa->consume('a');
+ok $rep_nfa->is_done, 'a accepted';
+$rep_nfa->consume('a');
+ok $rep_nfa->is_done, 'aa accepted';
+$rep_nfa->consume('a');
+ok $rep_nfa->is_done, 'aaa accepted';
+eval {$rep_nfa->consume('b'); fail("didn't die")};
+$rep_nfa->init;
+like $@, qr/^illegal input: 'b'/, 'consuming b is illegal';
+ok "$rep_nfa" =~ $repetition_acceptor_rx, 'right repetition acceptor';
+isnt $1, $3, 'two different states';
+is $2, 'a', 'accepts only a';
 
 __END__

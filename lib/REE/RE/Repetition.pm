@@ -17,3 +17,8 @@ sub to_regex {
     my $self = shift;
     return $self->re->to_regex . '*';
 }
+
+sub compile {
+    my $self = shift;
+    return $self->re->compile->repetition;
+}
