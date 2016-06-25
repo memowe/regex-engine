@@ -241,6 +241,7 @@ sub _eps_splits {
 
     # epsilon transitions
     for my $next (@next_states) {
+        next if $next eq $state;
         $self->set_current($next);
         $self->_eps_splits($next);
     }
@@ -293,6 +294,9 @@ sub repetition {
     # connect final with start
     my @final = grep {$new->is_final($_)} $new->all_states;
     $new->add_transition($_, $eps => $new->start) for @final;
+
+    # empty word should be accepted, too
+    $new->set_final($new->start);
 
     # done
     $new->init;
