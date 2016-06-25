@@ -31,3 +31,24 @@ sub simplified {
     $self->res([map $_->simplified => @{$self->res}]);
     return $self;
 }
+
+sub compile {
+    my $self = shift;
+
+    # shortcut
+    return unless @{$self->res};
+
+    # list helper (NFA alternation is a pairwise operation)
+    return $self->_compile_list(@{$self->res});
+}
+
+sub _compile_list {
+    my ($self, @rest) = @_;
+    my $first = shift @rest;
+
+    # only one sub regex
+    return $first->compile unless @rest;
+
+    # more than one: alternate first with compilation of rest
+    return $first->compile->alternate($self->_compile_list(@rest));
+}

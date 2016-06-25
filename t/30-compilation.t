@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use utf8;
 
-use Test::More tests => 23;
+use Test::More tests => 30;
 
 use REE::RE::Literal;
 use REE::RE::Repetition;
@@ -70,5 +70,35 @@ like $@, qr/^illegal input: 'b'/, 'consuming b is illegal';
 ok "$rep_nfa" =~ $repetition_acceptor_rx, 'right repetition acceptor';
 isnt $1, $3, 'two different states';
 is $2, 'a', 'accepts only a';
+
+# how an alternation of two literal acceptors should look like
+my $alternation_acceptor_rx = qr/^[^:]*:
+\* \S+ \(start\):
+    ε -> (\S+), (\S+)
+\* \1:
+    (.) -> (\S+)
+\4 \(final\):
+\* \2:
+    (.) -> (\S+)
+\6 \(final\):
+$/;
+
+# test an alternation
+my $alt = REE::RE::Alternation->new(res => [
+    REE::RE::Literal->new(value => 'a'),
+    REE::RE::Literal->new(value => 'b'),
+]);
+my $alt_nfa = $alt->compile();
+isa_ok $alt_nfa, 'REE::NFA', 'got an automaton';
+ok ! $alt_nfa->is_done, 'alternation acceptor not done';
+$alt_nfa->consume('a');
+ok $alt_nfa->is_done, 'a accepted';
+$alt_nfa->init;
+$alt_nfa->consume('b');
+ok $alt_nfa->is_done, 'b accepted';
+$alt_nfa->init;
+ok "$alt_nfa" =~ $alternation_acceptor_rx, 'right alternation acceptor';
+is $3, 'a', 'right input';
+is $5, 'b', 'right input';
 
 __END__
