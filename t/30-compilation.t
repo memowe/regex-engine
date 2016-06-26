@@ -4,12 +4,13 @@ use strict;
 use warnings;
 use utf8;
 
-use Test::More tests => 37;
+use Test::More tests => 45;
 
 use REE::RE::Literal;
 use REE::RE::Repetition;
 use REE::RE::Alternation;
 use REE::RE::Sequence;
+use REE::Parser;
 
 # how a literal acceptor should look like
 my $literal_acceptor_rx = qr/^[^:]*:
@@ -128,5 +129,23 @@ $seq_nfa->init;
 ok "$seq_nfa" =~ $sequence_acceptor_rx, 'right sequence acceptor';
 is $1, 'a', 'right input';
 is $4, 'b', 'right input';
+
+# compile complex nested regex
+my $complex_nfa = REE::Parser->new->parse('a(b|cd*)*e|f*g')->compile;
+ok ! $complex_nfa->is_done, 'complex nfa not done';
+$complex_nfa->consume_string('g');
+ok $complex_nfa->is_done, 'input "g" accepted';
+$complex_nfa->init->consume_string('ffffg');
+ok $complex_nfa->is_done, 'input "ffffg" accepted';
+$complex_nfa->init->consume_string('ffff');
+ok ! $complex_nfa->is_done, 'input "ffff" not accepted';
+$complex_nfa->init->consume_string('ae');
+ok $complex_nfa->is_done, 'input "ae" accepted';
+$complex_nfa->init->consume_string('abcbce');
+ok $complex_nfa->is_done, 'input "abcbce" accepted';
+$complex_nfa->init->consume_string('abcbbcdddde');
+ok $complex_nfa->is_done, 'input "abcbbcdddde" accepted';
+eval {$complex_nfa->init->consume_string('abcbbcddddef'); fail("didn't die")};
+like $@, qr/^illegal input: 'f'/, 'input "abcbbcddddef" not accepted';
 
 __END__
