@@ -17,3 +17,8 @@ sub simplified {
     my $self = shift;
     return $self;
 }
+
+sub compile {
+    my $self = shift;
+    die "implement in subclass!\n";
+}
