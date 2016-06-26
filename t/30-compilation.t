@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use utf8;
 
-use Test::More tests => 30;
+use Test::More tests => 37;
 
 use REE::RE::Literal;
 use REE::RE::Repetition;
@@ -100,5 +100,33 @@ $alt_nfa->init;
 ok "$alt_nfa" =~ $alternation_acceptor_rx, 'right alternation acceptor';
 is $3, 'a', 'right input';
 is $5, 'b', 'right input';
+
+# how a sequence of two literal acceptors should look like
+my $sequence_acceptor_rx = qr/^[^:]*:
+\* \S+ \(start\):
+    (.) -> (\S+)
+\2:
+    ε -> (\S+)
+\3:
+    (.) -> (\S+)
+\5 \(final\):
+$/;
+
+# test a sequence
+my $seq = REE::RE::Sequence->new(res => [
+    REE::RE::Literal->new(value => 'a'),
+    REE::RE::Literal->new(value => 'b'),
+]);
+my $seq_nfa = $seq->compile();
+isa_ok $seq_nfa, 'REE::NFA', 'got an automaton';
+ok ! $seq_nfa->is_done, 'sequence acceptor not done';
+$seq_nfa->consume('a');
+ok ! $seq_nfa->is_done, 'sequence acceptor not done after consuming "a"';
+$seq_nfa->consume('b');
+ok $seq_nfa->is_done, 'sequence acceptor done after consuming "b"';
+$seq_nfa->init;
+ok "$seq_nfa" =~ $sequence_acceptor_rx, 'right sequence acceptor';
+is $1, 'a', 'right input';
+is $4, 'b', 'right input';
 
 __END__
