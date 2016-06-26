@@ -40,4 +40,9 @@ sub match {
     return 1;
 }
 
+sub canonical_regex {
+    my $self = shift;
+    return $self->_re->to_regex;
+}
+
 1;
