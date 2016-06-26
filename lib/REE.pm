@@ -45,4 +45,9 @@ sub canonical_regex {
     return $self->_re->to_regex;
 }
 
+sub nfa_representation {
+    my $self = shift;
+    return $self->_nfa->init->to_string;
+}
+
 1;
