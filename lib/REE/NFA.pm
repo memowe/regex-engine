@@ -227,6 +227,7 @@ sub init {
 
     # done
     $self->_initialized(1);
+    return $self; # enable chaining
 }
 
 sub _eps_splits {
