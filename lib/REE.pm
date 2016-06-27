@@ -8,8 +8,7 @@ use REE::Parser;
 
 our $VERSION = '0.01';
 
-has regex   => (required => 1, is => 'ro');
-has parser  => sub {REE::Parser->new};
+has regex => (required => 1, is => 'ro');
 has '_re';
 has '_nfa';
 
@@ -17,7 +16,7 @@ sub BUILD {
     my $self = shift;
 
     # parse
-    eval {$self->_re($self->parser->parse($self->regex))};
+    eval {$self->_re(REE::Parser->new->parse($self->regex))};
     die "Parse error: $@" if $@;
 
     # compile
