@@ -9,7 +9,7 @@ use REE::Parser;
 our $VERSION = '0.01';
 
 has regex   => (required => 1, is => 'ro');
-has parser  => REE::Parser->new;
+has parser  => sub {REE::Parser->new};
 has '_re';
 has '_nfa';
 
