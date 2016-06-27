@@ -1,6 +1,34 @@
 REE - Regular Expression Engine
 ===============================
 
+This is a toy project to get a better understanding of how regular expression
+engines work. REE can build parse trees and compile working NFA representations
+of (simple) regular expressions. This can be accessed via a simple public
+interface.
+
+## Usage Example
+
+    use feature 'say';
+    use REE;
+
+    # matching
+    my $ree     = REE->new(regex => '(foo|bar)*baz');
+    my $string  = "foobarbaz";
+    say "$string matches" if $ree->match($string);
+
+    # meta information
+    say 'canonical regex: ' . $ree->canonical_regex;
+    say 'NFA representation: ';
+    say $ree->nfa_representation;
+
+## Current Limitations
+
+REE is currently able to parse very basic regular expressions with repetitions
+(`(foo)*`) and alternations (`bar|baz`). Planned additions:
+
+- `+` and `?` quantifiers
+- character classes (`[abc]`)
+
 ## License and Copyright
 
 Copyright 2016 Mirko Westermeier.
