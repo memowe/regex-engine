@@ -29,6 +29,10 @@ REE is currently able to parse very basic regular expressions with repetitions
 - `+` and `?` quantifiers
 - character classes (`[abc]`)
 
+## Web Interface
+
+There is a simple [web interface for REE](https://algo-git.uni-muenster.de/memowe/regex-engine-web).
+
 ## License and Copyright
 
 Copyright 2016 Mirko Westermeier.
