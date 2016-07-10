@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 23;
+use Test::More tests => 25;
 
 use_ok('REE::Parser');
 
@@ -73,6 +73,18 @@ ALTERNATION: (
 )
 END
 is $re->to_regex, '(a|b)', 'character class regex';
+
+# parse character class with meta characters
+$re = $parser->parse('[a)*b]');
+is $re->to_string, <<END, 'character class with meta characters';
+ALTERNATION: (
+    LITERAL: "a"
+    LITERAL: ")"
+    LITERAL: "*"
+    LITERAL: "b"
+)
+END
+is $re->to_regex, '(a|\\)|\\*|b)', 'character class regex';
 
 # parse nested sequence
 $re = $parser->parse('ab*(c|d)');
