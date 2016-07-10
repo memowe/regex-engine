@@ -109,12 +109,12 @@ END
 is $re->to_regex, '(a|(bc))*', 'nested repetition regex';
 
 # complex nested regex
-$re = $parser->parse('a(b|cd*)*e|f*g');
+$re = $parser->parse('a(b|cd*)+e|f*g');
 is $re->to_string, <<END, 'complex nested';
 ALTERNATION: (
     SEQUENCE: (
         LITERAL: "a"
-        REPETITION:
+        SEQUENCE: (
             ALTERNATION: (
                 LITERAL: "b"
                 SEQUENCE: (
@@ -123,6 +123,16 @@ ALTERNATION: (
                         LITERAL: "d"
                 )
             )
+            REPETITION:
+                ALTERNATION: (
+                    LITERAL: "b"
+                    SEQUENCE: (
+                        LITERAL: "c"
+                        REPETITION:
+                            LITERAL: "d"
+                    )
+                )
+        )
         LITERAL: "e"
     )
     SEQUENCE: (
@@ -132,6 +142,6 @@ ALTERNATION: (
     )
 )
 END
-is $re->to_regex, '((a(b|(cd*))*e)|(f*g))', 'complex nested regex';
+is $re->to_regex, '((a((b|(cd*))(b|(cd*))*)e)|(f*g))', 'complex nested regex';
 
 __END__
