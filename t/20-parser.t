@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 19;
+use Test::More tests => 21;
 
 use_ok('REE::Parser');
 
@@ -52,6 +52,17 @@ REPETITION:
     LITERAL: "a"
 END
 is $re->to_regex, 'a*', 'simple repetition regex';
+
+# parse simple plus repetition
+$re = $parser->parse('a+');
+is $re->to_string, <<END, 'plus repetition';
+SEQUENCE: (
+    LITERAL: "a"
+    REPETITION:
+        LITERAL: "a"
+)
+END
+is $re->to_regex, '(aa*)', 'plus repetition regex';
 
 # parse nested sequence
 $re = $parser->parse('ab*(c|d)');
