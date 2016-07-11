@@ -19,7 +19,7 @@ $a->set_final($a_end);
 # test repetition preparation
 $a->consume_string('ab');
 ok $a->is_done, 'consumed "ab"';
-eval {$a->consume_string('ab'); fail("didn't die of illegal input")};
+eval {$a->consume_string('ab'); fail "didn't die of illegal input"};
 like $@, qr/^illegal input: 'a'/, 'consuming "ab" again is illegal';
 
 # test repetition
@@ -62,20 +62,20 @@ ok $a2->is_done, 'consumed cd';
 my $alternation = $a1->alternate($a2);
 $alternation->consume_string('ab');
 ok $alternation->is_done('consumed ab'), 'alternation consumed "ab"';
-eval {$alternation->consume_string('cd'); fail("didn't die")};
+eval {$alternation->consume_string('cd'); fail "didn't die"};
 like $@, qr/^illegal input: 'c'/, 'consuming "cd" now is illegal';
 $alternation->init;
 $alternation->consume_string('cd');
 ok $alternation->is_done('consumed cd'), 'alternation consumed "cd"';
-eval {$alternation->consume_string('ab'); fail("didn't die")};
+eval {$alternation->consume_string('ab'); fail "didn't die"};
 like $@, qr/^illegal input: 'a'/, 'consuming "ab" now is illegal';
 
 # test sequence
 my $sequence = $a1->append($a2);
-eval {$sequence->consume_string('cd'); fail("didn't die")};
+eval {$sequence->consume_string('cd'); fail "didn't die"};
 like $@, qr/^illegal input: 'c'/, 'starting with "cd" is illegal';
 $sequence->consume_string('ab');
-eval {$sequence->consume_string('ab'); fail("didn't die")};
+eval {$sequence->consume_string('ab'); fail "didn't die"};
 like $@, qr/^illegal input: 'a'/, 'appending "ab" to "ab" is illegal';
 $sequence->consume_string('cd');
 ok $sequence->is_done, 'sequence accepted';

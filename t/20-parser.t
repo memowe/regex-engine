@@ -71,11 +71,11 @@ is $re->to_regex, '(a\\]b\\[c\\+d\\*e\\|f\\)g\\(h)',
     'sequence with escaped special characters regex';
 
 # parse illegal escape sequence: empty string
-eval {$parser->parse('\\'); fail("didn't die")};
+eval {$parser->parse('\\'); fail "didn't die"};
 like $@, qr/^unexpected end of string/, 'illegal escape: end of string';
 
 # parse illegal escape sequence: non-special character
-eval {$parser->parse('\\a'); fail("didn't die")};
+eval {$parser->parse('\\a'); fail "didn't die"};
 like $@, qr/^illegal escape sequence: "\\a"/, 'illegal escape sequence';
 
 # parse simple alternation
