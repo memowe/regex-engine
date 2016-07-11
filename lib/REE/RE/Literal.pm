@@ -14,6 +14,12 @@ sub to_string {
 
 sub to_regex {
     my $self = shift;
+
+    # escape special characters
+    my @special = ('(', ')', '|', '*', '+', '[', ']');
+    return '\\' . $self->value if grep {$_ eq $self->value} @special;
+
+    # no escaping neccessary
     return $self->value;
 }
 
