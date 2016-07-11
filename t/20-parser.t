@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 25;
+use Test::More tests => 29;
 
 use_ok('REE::Parser');
 
@@ -34,6 +34,37 @@ SEQUENCE: (
 )
 END
 is $re->to_regex, '(ab)', 'simple sequence regex';
+
+# parse escaped special character literal
+$re = $parser->parse('\\*');
+is $re->to_string, <<END, 'single escape sequence';
+LITERAL: "*"
+END
+is $re->to_regex, '\\*', 'single escape sequence regex';
+
+# parse sequence with escaped special characters
+$re = $parser->parse('a\\]b\\[c\\+d\\*e\\|f\\)g\\(h');
+is $re->to_string, <<END, 'sequence with escaped special characters';
+SEQUENCE: (
+    LITERAL: "a"
+    LITERAL: ""
+    LITERAL: "b"
+    LITERAL: ""
+    LITERAL: "c"
+    LITERAL: ""
+    LITERAL: "d"
+    LITERAL: ""
+    LITERAL: "e"
+    LITERAL: ""
+    LITERAL: "f"
+    LITERAL: ""
+    LITERAL: "g"
+    LITERAL: ""
+    LITERAL: "h"
+)
+END
+is $re->to_regex, 'a\\]b\\[c\\+d\\*e\\|f\\)g\\(h',
+    'sequence with escaped special characters regex';
 
 # parse simple alternation
 $re = $parser->parse('a|b');
