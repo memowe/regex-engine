@@ -23,11 +23,7 @@ interface.
 
 ## Current Limitations
 
-REE is currently able to parse very basic regular expressions with repetitions
-(`(foo)*`) and alternations (`bar|baz`). Planned additions:
-
-- `+` and `?` quantifiers
-- character classes (`[abc]`)
+REE is currently missing support for the *optional quantifier* `?`.
 
 ## Web Interface
 
