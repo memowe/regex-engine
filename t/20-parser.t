@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 21;
+use Test::More tests => 32;
 
 use_ok('REE::Parser');
 
@@ -25,6 +25,10 @@ LITERAL: "a"
 END
 is $re->to_regex, 'a', 'single literal regex';
 
+# parse illegal control sequence
+eval {$parser->parse('*'); fail "didn't die"};
+like $@, qr/^unexpected */, 'unexpected star';
+
 # parse simple sequence
 $re = $parser->parse('ab');
 is $re->to_string, <<END, 'simple sequence';
@@ -34,6 +38,45 @@ SEQUENCE: (
 )
 END
 is $re->to_regex, '(ab)', 'simple sequence regex';
+
+# parse escaped special character literal
+$re = $parser->parse('\\*');
+is $re->to_string, <<END, 'single escape sequence';
+LITERAL: "*"
+END
+is $re->to_regex, '\\*', 'single escape sequence regex';
+
+# parse sequence with escaped special characters
+$re = $parser->parse('a\\]b\\[c\\+d\\*e\\|f\\)g\\(h');
+is $re->to_string, <<END, 'sequence with escaped special characters';
+SEQUENCE: (
+    LITERAL: "a"
+    LITERAL: "]"
+    LITERAL: "b"
+    LITERAL: "["
+    LITERAL: "c"
+    LITERAL: "+"
+    LITERAL: "d"
+    LITERAL: "*"
+    LITERAL: "e"
+    LITERAL: "|"
+    LITERAL: "f"
+    LITERAL: ")"
+    LITERAL: "g"
+    LITERAL: "("
+    LITERAL: "h"
+)
+END
+is $re->to_regex, '(a\\]b\\[c\\+d\\*e\\|f\\)g\\(h)',
+    'sequence with escaped special characters regex';
+
+# parse illegal escape sequence: empty string
+eval {$parser->parse('\\'); fail "didn't die"};
+like $@, qr/^unexpected end of string/, 'illegal escape: end of string';
+
+# parse illegal escape sequence: non-special character
+eval {$parser->parse('\\a'); fail "didn't die"};
+like $@, qr/^illegal escape sequence: "\\a"/, 'illegal escape sequence';
 
 # parse simple alternation
 $re = $parser->parse('a|b');
@@ -63,6 +106,28 @@ SEQUENCE: (
 )
 END
 is $re->to_regex, '(aa*)', 'plus repetition regex';
+
+# parse simple character class
+$re = $parser->parse('[ab]');
+is $re->to_string, <<END, 'character class';
+ALTERNATION: (
+    LITERAL: "a"
+    LITERAL: "b"
+)
+END
+is $re->to_regex, '(a|b)', 'character class regex';
+
+# parse character class with meta characters
+$re = $parser->parse('[a)*b]');
+is $re->to_string, <<END, 'character class with meta characters';
+ALTERNATION: (
+    LITERAL: "a"
+    LITERAL: ")"
+    LITERAL: "*"
+    LITERAL: "b"
+)
+END
+is $re->to_regex, '(a|\\)|\\*|b)', 'character class regex';
 
 # parse nested sequence
 $re = $parser->parse('ab*(c|d)');
@@ -109,7 +174,7 @@ END
 is $re->to_regex, '(a|(bc))*', 'nested repetition regex';
 
 # complex nested regex
-$re = $parser->parse('a(b|cd*)+e|f*g');
+$re = $parser->parse('a(b|cd*)+e|f*[gh]');
 is $re->to_string, <<END, 'complex nested';
 ALTERNATION: (
     SEQUENCE: (
@@ -138,10 +203,13 @@ ALTERNATION: (
     SEQUENCE: (
         REPETITION:
             LITERAL: "f"
-        LITERAL: "g"
+        ALTERNATION: (
+            LITERAL: "g"
+            LITERAL: "h"
+        )
     )
 )
 END
-is $re->to_regex, '((a((b|(cd*))(b|(cd*))*)e)|(f*g))', 'complex nested regex';
+is $re->to_regex, '((a((b|(cd*))(b|(cd*))*)e)|(f*(g|h)))', 'complex nested regex';
 
 __END__

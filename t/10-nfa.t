@@ -31,7 +31,7 @@ is $trivial_start, $trivial->current_state, 'current state is start state';
 
 # illegal input to trivial dfa
 my $trivial_before = $trivial->current_state;
-eval {$trivial->consume('a'); fail("didn't die of illegal input")};
+eval {$trivial->consume('a'); fail "didn't die of illegal input"};
 like $@, qr/^illegal input: 'a'/, 'illegal input denied';
 is $trivial->current_state, $trivial_before, 'illegal input: no transition';
 
@@ -54,7 +54,7 @@ z acceptor:
 $a_acceptor_end (final):
 END
 is "$a_acceptor", $a_acceptor->to_string, 'consistent stringification';
-eval {$a_acceptor->consume('z'); fail("didn't die of illegal input")};
+eval {$a_acceptor->consume('z'); fail "didn't die of illegal input"};
 like $@, qr/^illegal input: 'z'/, 'transition not known yet';
 $a_acceptor->add_transitions($a_acceptor_start => {z => $a_acceptor_end});
 is $a_acceptor->to_string, <<"END", 'right stringification';
@@ -129,7 +129,7 @@ ok $abcd->is_done, 'done consuming step by step';
 $abcd->consume('d');
 ok $abcd->is_done, 'done consuming legal input after final';
 $abcd->init;
-eval {$abcd->consume('d'); fail("didn't die of illegal input")};
+eval {$abcd->consume('d'); fail "didn't die of illegal input"};
 like $@, qr/^illegal input: 'd'/, 'final input illegal at the beginning';
 $abcd->consume('c')->consume('d');
 ok $abcd->is_done, 'continued parsing of a valid sequence after exception';
@@ -260,7 +260,7 @@ ok $mutant->is_done, 'clone consumed "ab"';
 $mutant->init;
 $mutant->consume('a');
 ok ! $mutant->is_done, 'clone is not done after consuming "a"';
-eval {$mutant->consume('a'); fail("didn't die of illegal input")};
+eval {$mutant->consume('a'); fail "didn't die of illegal input"};
 like $@, qr/^illegal input: 'a'/, 'consuming another "a" is illegal';
 $mutant->consume('b');
 ok $mutant->is_done, 'clone is done after consuming "b"';

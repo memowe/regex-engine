@@ -4,16 +4,23 @@ extends 'REE::RE';
 
 use REE::NFA;
 
+our @special_characters = ('(', ')', '|', '*', '+', '[', ']');
+
 has value => (required => 1);
 
 sub to_string {
     my ($self, $indent) = @_;
     $indent //= '';
-    return $indent . 'LITERAL: "' . quotemeta($self->value) . '"' . "\n";
+    return $indent . 'LITERAL: "' . $self->value . '"' . "\n";
 }
 
 sub to_regex {
     my $self = shift;
+
+    # escape special characters
+    return '\\' . $self->value if grep {$_ eq $self->value} @special_characters;
+
+    # no escaping neccessary
     return $self->value;
 }
 
