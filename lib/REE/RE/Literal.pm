@@ -4,6 +4,8 @@ extends 'REE::RE';
 
 use REE::NFA;
 
+our @special_characters = ('(', ')', '|', '*', '+', '[', ']');
+
 has value => (required => 1);
 
 sub to_string {
@@ -16,8 +18,7 @@ sub to_regex {
     my $self = shift;
 
     # escape special characters
-    my @special = ('(', ')', '|', '*', '+', '[', ']');
-    return '\\' . $self->value if grep {$_ eq $self->value} @special;
+    return '\\' . $self->value if grep {$_ eq $self->value} @special_characters;
 
     # no escaping neccessary
     return $self->value;

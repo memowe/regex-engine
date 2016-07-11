@@ -47,24 +47,32 @@ $re = $parser->parse('a\\]b\\[c\\+d\\*e\\|f\\)g\\(h');
 is $re->to_string, <<END, 'sequence with escaped special characters';
 SEQUENCE: (
     LITERAL: "a"
-    LITERAL: ""
+    LITERAL: "]"
     LITERAL: "b"
-    LITERAL: ""
+    LITERAL: "["
     LITERAL: "c"
-    LITERAL: ""
+    LITERAL: "+"
     LITERAL: "d"
-    LITERAL: ""
+    LITERAL: "*"
     LITERAL: "e"
-    LITERAL: ""
+    LITERAL: "|"
     LITERAL: "f"
-    LITERAL: ""
+    LITERAL: ")"
     LITERAL: "g"
-    LITERAL: ""
+    LITERAL: "("
     LITERAL: "h"
 )
 END
-is $re->to_regex, 'a\\]b\\[c\\+d\\*e\\|f\\)g\\(h',
+is $re->to_regex, '(a\\]b\\[c\\+d\\*e\\|f\\)g\\(h)',
     'sequence with escaped special characters regex';
+
+# parse illegal escape sequence: empty string
+eval {$parser->parse('\\'); fail("didn't die")};
+like $@, qr/^unexpected end of string/, 'illegal escape: end of string';
+
+# parse illegal escape sequence: non-special character
+eval {$parser->parse('\\a'); fail("didn't die")};
+like $@, qr/^illegal escape sequence: "\\a"/, 'illegal escape sequence';
 
 # parse simple alternation
 $re = $parser->parse('a|b');

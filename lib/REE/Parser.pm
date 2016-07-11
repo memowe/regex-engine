@@ -22,6 +22,11 @@ sub _next_char {
     return $first;
 }
 
+sub _push_back {
+    my ($self, $char) = @_;
+    $self->_input($char . $self->_input);
+}
+
 sub parse {
     my ($self, $input) = @_;
     $self->_input($input);
@@ -84,9 +89,22 @@ sub _parse_alternation {
             push @{$cur_seq->res}, $plus_re;
         }
 
-        # literal
+        # character class
+        # [abc] should be interpreted as (a|b|c)
+        elsif ($c eq '[') {
+            my $cur_seq = $sequences[-1];
+            push @{$cur_seq->res}, $self->_parse_character_class;
+        }
+
+        # escaped literal
+        elsif ($c eq '\\') {
+            $buffer = $self->_parse_escaped_literal;
+        }
+
+        # lookahead for a literal
         else {
-            $buffer = REE::RE::Literal->new(value => $c);
+            $self->_push_back($c);
+            $buffer = $self->_parse_literal;
         }
 
         # add buffer to last sequence
@@ -98,4 +116,50 @@ sub _parse_alternation {
 
     # collect sequences
     return REE::RE::Alternation->new(res => \@sequences)->simplified;
+}
+
+sub _parse_character_class {
+    my $self = shift;
+
+    # parse simple literals only (bypass escape checks)
+    my @literals;
+    while (defined(my $c = $self->_next_char)) {
+        last if $c eq ']';
+
+        # add to literals
+        push @literals, REE::RE::Literal->new(value => $c);
+    }
+
+    # done
+    return REE::RE::Alternation->new(res => \@literals);
+}
+
+sub _parse_literal {
+    my $self = shift;
+    my $next = $self->_next_char;
+
+    # end of string
+    return unless defined $next;
+
+    # should've been escaped
+    die "illegal literal: \"$next\"\n"
+        if grep {$_ eq $next} @REE::RE::Literal::special_characters;
+
+    # everything's fine
+    return REE::RE::Literal->new(value => $next);
+}
+
+sub _parse_escaped_literal {
+    my $self = shift;
+    my $next = $self->_next_char;
+
+    # end of string
+    die "unexpected end of string\n" unless defined $next;
+
+    # illegal escape sequence
+    die "illegal escape sequence: \"\\$next\"\n"
+        unless grep {$_ eq $next} @REE::RE::Literal::special_characters;
+
+    # everything's fine
+    return REE::RE::Literal->new(value => $next);
 }
