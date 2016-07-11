@@ -60,8 +60,7 @@ sub _parse_alternation {
         elsif ($c eq '*') {
 
             # get previous re
-            my $cur_seq = $sequences[-1];
-            die "unexpected *\n" unless $cur_seq;
+            my $cur_seq = $sequences[-1]; # exists always
             my $cur_re  = pop @{$cur_seq->res};
             die "unexpected *\n" unless $cur_re;
 
