@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 29;
+use Test::More tests => 32;
 
 use_ok('REE::Parser');
 
@@ -24,6 +24,10 @@ is $re->to_string, <<END, 'single literal';
 LITERAL: "a"
 END
 is $re->to_regex, 'a', 'single literal regex';
+
+# parse illegal control sequence
+eval {$parser->parse('*'); fail "didn't die"};
+like $@, qr/^unexpected */, 'unexpected star';
 
 # parse simple sequence
 $re = $parser->parse('ab');
