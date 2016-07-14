@@ -89,6 +89,24 @@ sub _parse_alternation {
             push @{$cur_seq->res}, $plus_re;
         }
 
+        # "optional" quantification of previous re:
+        # (REGEX)? should be interpreted as (|REGEX)
+        elsif ($c eq '?') {
+
+            # get previous re
+            my $cur_seq = $sequences[-1];
+            die "unexpected ?\n" unless $cur_seq;
+            my $cur_re  = pop @{$cur_seq->res};
+            die "unexpected ?\n" unless $cur_re;
+
+            # compose alternation
+            my $nothing = REE::RE::Nothing->new;
+            my $alt_re  = REE::RE::Alternation->new(res => [$nothing, $cur_re]);
+
+            # done
+            push @{$cur_seq->res}, $alt_re;
+        }
+
         # character class
         # [abc] should be interpreted as (a|b|c)
         elsif ($c eq '[') {
