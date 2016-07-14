@@ -231,7 +231,7 @@ sub init {
 }
 
 sub _eps_splits {
-    my ($self, $state) = @_;
+    my ($self, $state, $seen) = @_;
 
     # nothing to do
     return if not $self->is_current($state)
@@ -241,10 +241,19 @@ sub _eps_splits {
     my @next_states = @{$self->_states->{$state}{transitions}{$eps}};
 
     # epsilon transitions
+    $seen //= {};
     for my $next (@next_states) {
+
+        # already seen
+        next if $seen->{$next};
+
+        # 1-loop
         next if $next eq $state;
+
+        # split and remember
+        $seen->{$next} = 1;
         $self->set_current($next);
-        $self->_eps_splits($next);
+        $self->_eps_splits($next, $seen);
     }
 }
 
