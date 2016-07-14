@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 32;
+use Test::More tests => 36;
 
 use_ok('REE::Parser');
 
@@ -13,10 +13,9 @@ my $parser = REE::Parser->new;
 # parse empty expression
 my $re = $parser->parse('');
 is $re->to_string, <<END, 'empty regex';
-SEQUENCE: (
-)
+NOTHING
 END
-is $re->to_regex, '()', 'empty regex regex';
+is $re->to_regex, '', 'empty regex regex';
 
 # parse single literal
 $re = $parser->parse('a');
@@ -87,6 +86,29 @@ ALTERNATION: (
 )
 END
 is $re->to_regex, '(a|b)', 'simple alternation regex';
+
+# parse half-empty alternation
+$re = $parser->parse('|a');
+is $re->to_string, <<END, 'half-empty alternation';
+ALTERNATION: (
+    NOTHING
+    LITERAL: "a"
+)
+END
+is $re->to_regex, '(|a)', 'half-empty alternation regex';
+
+# parse multi empty alternation
+$re = $parser->parse('|a|b||');
+is $re->to_string, <<END, 'multi-empty alternation';
+ALTERNATION: (
+    NOTHING
+    LITERAL: "a"
+    LITERAL: "b"
+    NOTHING
+    NOTHING
+)
+END
+is $re->to_regex, '(|a|b||)', 'multi-empty alternation regex';
 
 # parse simple repetition
 $re = $parser->parse('a*');
@@ -174,7 +196,7 @@ END
 is $re->to_regex, '(a|(bc))*', 'nested repetition regex';
 
 # complex nested regex
-$re = $parser->parse('a(b|cd*)+e|f*[gh]');
+$re = $parser->parse('a(b|cd*|)+e|f*[gh]');
 is $re->to_string, <<END, 'complex nested';
 ALTERNATION: (
     SEQUENCE: (
@@ -187,6 +209,7 @@ ALTERNATION: (
                     REPETITION:
                         LITERAL: "d"
                 )
+                NOTHING
             )
             REPETITION:
                 ALTERNATION: (
@@ -196,6 +219,7 @@ ALTERNATION: (
                         REPETITION:
                             LITERAL: "d"
                     )
+                    NOTHING
                 )
         )
         LITERAL: "e"
@@ -210,6 +234,6 @@ ALTERNATION: (
     )
 )
 END
-is $re->to_regex, '((a((b|(cd*))(b|(cd*))*)e)|(f*(g|h)))', 'complex nested regex';
+is $re->to_regex, '((a((b|(cd*)|)(b|(cd*)|)*)e)|(f*(g|h)))', 'complex nested regex';
 
 __END__
