@@ -21,10 +21,6 @@ interface.
     say 'NFA representation: ';
     say $ree->nfa_representation;
 
-## Current Limitations
-
-REE is currently missing support for the *optional quantifier* `?`.
-
 ## Web Interface
 
 There is a simple [web interface for REE](https://algo-git.uni-muenster.de/memowe/regex-engine-web).
