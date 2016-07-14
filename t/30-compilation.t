@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use utf8;
 
-use Test::More tests => 45;
+use Test::More tests => 48;
 
 use REE::RE::Literal;
 use REE::RE::Repetition;
@@ -18,6 +18,14 @@ my $literal_acceptor_rx = qr/^[^:]*:
     (.) -> (\S+)
 \3 \(final\):
 $/;
+
+# test empty regex
+my $empty = REE::RE::Nothing->new;
+my $empty_nfa = $empty->compile();
+isa_ok $empty_nfa, 'REE::NFA', 'got an automaton';
+ok $empty_nfa->is_done, 'empty regex acceptor is done';
+eval {$empty_nfa->consume('a'); fail "didn't die"};
+like $@, qr/^illegal input: 'a'/, 'consuming a literal is illegal';
 
 # test some literals
 my $lit_a = REE::RE::Literal->new(value => 'a');

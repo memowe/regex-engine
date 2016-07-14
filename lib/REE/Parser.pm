@@ -1,5 +1,6 @@
 package REE::Parser;
 use REE::Mo;
+use REE::RE::Nothing;
 use REE::RE::Alternation;
 use REE::RE::Sequence;
 use REE::RE::Repetition;
@@ -112,6 +113,9 @@ sub _parse_alternation {
             push @{$current->res}, $buffer;
         }
     }
+
+    # test for empty regex
+    return REE::RE::Nothing->new unless @sequences;
 
     # collect sequences
     return REE::RE::Alternation->new(res => \@sequences)->simplified;
