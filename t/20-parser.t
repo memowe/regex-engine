@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 36;
+use Test::More tests => 38;
 
 use_ok('REE::Parser');
 
@@ -129,6 +129,16 @@ SEQUENCE: (
 END
 is $re->to_regex, '(aa*)', 'plus repetition regex';
 
+# parse simple optional quantification
+$re = $parser->parse('a?');
+is $re->to_string, <<END, 'optional quantification';
+ALTERNATION: (
+    NOTHING
+    LITERAL: "a"
+)
+END
+is $re->to_regex, '(|a)', 'optional quantification regex';
+
 # parse simple character class
 $re = $parser->parse('[ab]');
 is $re->to_string, <<END, 'character class';
@@ -196,7 +206,7 @@ END
 is $re->to_regex, '(a|(bc))*', 'nested repetition regex';
 
 # complex nested regex
-$re = $parser->parse('a(b|cd*|)+e|f*[gh]');
+$re = $parser->parse('a(b|cd*|)+e|f*([gh]i)?');
 is $re->to_string, <<END, 'complex nested';
 ALTERNATION: (
     SEQUENCE: (
@@ -228,12 +238,19 @@ ALTERNATION: (
         REPETITION:
             LITERAL: "f"
         ALTERNATION: (
-            LITERAL: "g"
-            LITERAL: "h"
+            NOTHING
+            SEQUENCE: (
+                ALTERNATION: (
+                    LITERAL: "g"
+                    LITERAL: "h"
+                )
+                LITERAL: "i"
+            )
         )
     )
 )
 END
-is $re->to_regex, '((a((b|(cd*)|)(b|(cd*)|)*)e)|(f*(g|h)))', 'complex nested regex';
+is $re->to_regex, '((a((b|(cd*)|)(b|(cd*)|)*)e)|(f*(|((g|h)i))))',
+    'complex nested regex';
 
 __END__
