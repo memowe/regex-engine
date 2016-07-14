@@ -2,6 +2,8 @@ package REE::RE::Alternation;
 use REE::Mo 'required';
 extends 'REE::RE';
 
+use REE::RE::Nothing;
+
 has res => (required => 1);
 
 sub to_string {
@@ -23,6 +25,9 @@ sub to_regex {
 
 sub simplified {
     my $self = shift;
+
+    # no regex: nothing
+    return REE::RE::Nothing->new unless @{$self->res};
 
     # only one re: no alternation
     return $self->res->[0]->simplified if @{$self->res} == 1;
