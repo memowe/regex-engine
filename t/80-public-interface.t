@@ -13,14 +13,14 @@ eval {REE->new(regex => '*'); fail "didn't die"};
 like $@, qr/^Parse error: unexpected */, 'died of regex parse error';
 
 # regex matching
-my $r = REE->new(regex => 'a(b|cd*|)+e|f*[gh]');
-ok $r->match('g'), "'g' matches";
-ok ! $r->match('ffff'), "'ffff' doesn't match";
+my $r = REE->new(regex => 'a(b|cd*|)+e|f*([gh]i)?');
+ok $r->match('gi'), "'gi' matches";
+ok ! $r->match('ffffh'), "'ffffh' doesn't match";
 ok $r->match('abcbbcdddde'), "'abcbbcdddde' matches";
 ok ! $r->match('abcbbcddddef'), "'abcbbcddddef' doesn't match";
 
 # canonical regex
-is $r->canonical_regex, '((a((b|(cd*)|)(b|(cd*)|)*)e)|(f*(g|h)))',
+is $r->canonical_regex, '((a((b|(cd*)|)(b|(cd*)|)*)e)|(f*(|((g|h)i))))',
     'right canonical regex';
 
 # nfa string representation
