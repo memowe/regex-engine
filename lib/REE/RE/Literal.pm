@@ -4,7 +4,7 @@ extends 'REE::RE';
 
 use REE::NFA;
 
-our @special_characters = ('(', ')', '|', '*', '+', '[', ']');
+our @special_characters = ('(', ')', '|', '*', '+', '?', '[', ']');
 
 has value => (required => 1);
 

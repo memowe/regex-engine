@@ -46,7 +46,7 @@ END
 is $re->to_regex, '\\*', 'single escape sequence regex';
 
 # parse sequence with escaped special characters
-$re = $parser->parse('a\\]b\\[c\\+d\\*e\\|f\\)g\\(h');
+$re = $parser->parse('a\\]b\\[c\\?d\\+e\\*f\\|g\\)h\\(i');
 is $re->to_string, <<END, 'sequence with escaped special characters';
 SEQUENCE: (
     LITERAL: "a"
@@ -54,19 +54,21 @@ SEQUENCE: (
     LITERAL: "b"
     LITERAL: "["
     LITERAL: "c"
-    LITERAL: "+"
+    LITERAL: "?"
     LITERAL: "d"
-    LITERAL: "*"
+    LITERAL: "+"
     LITERAL: "e"
-    LITERAL: "|"
+    LITERAL: "*"
     LITERAL: "f"
-    LITERAL: ")"
+    LITERAL: "|"
     LITERAL: "g"
-    LITERAL: "("
+    LITERAL: ")"
     LITERAL: "h"
+    LITERAL: "("
+    LITERAL: "i"
 )
 END
-is $re->to_regex, '(a\\]b\\[c\\+d\\*e\\|f\\)g\\(h)',
+is $re->to_regex, '(a\\]b\\[c\\?d\\+e\\*f\\|g\\)h\\(i)',
     'sequence with escaped special characters regex';
 
 # parse illegal escape sequence: empty string
