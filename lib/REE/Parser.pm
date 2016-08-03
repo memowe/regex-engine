@@ -57,54 +57,21 @@ sub _parse_alternation {
             last;
         }
 
-        # repetition of previous re
-        elsif ($c eq '*') {
+        # repetitions
+        elsif ($c eq '*' or $c eq '+' or $c eq '?') {
 
             # get previous re
             my $cur_seq = $sequences[-1]; # exists always
             my $cur_re  = pop @{$cur_seq->res};
             die "unexpected *\n" unless $cur_re;
 
+            # quantification
+            my %re_options      = (re => $cur_re);
+            $re_options{min}    = 1 if $c eq '+';
+            $re_options{max}    = 1 if $c eq '?';
+
             # inject repeated re
-            push @{$cur_seq->res}, REE::RE::Repetition->new(re => $cur_re);
-        }
-
-        # "plus" repetition of previous re:
-        # (REGEX)+ should be interpreted as REGEX(REGEX)*
-        elsif ($c eq '+') {
-
-            # get previous re
-            my $cur_seq = $sequences[-1];
-            die "unexpected +\n" unless $cur_seq;
-            my $cur_re  = pop @{$cur_seq->res};
-            die "unexpected +\n" unless $cur_re;
-
-            # compose repetition
-            my $one_re  = $cur_re;
-            my $rep_re  = REE::RE::Repetition->new(re => $cur_re);
-            my $plus_re = REE::RE::Sequence->new(res => [$one_re, $rep_re]);
-
-
-            # done
-            push @{$cur_seq->res}, $plus_re;
-        }
-
-        # "optional" quantification of previous re:
-        # (REGEX)? should be interpreted as (|REGEX)
-        elsif ($c eq '?') {
-
-            # get previous re
-            my $cur_seq = $sequences[-1];
-            die "unexpected ?\n" unless $cur_seq;
-            my $cur_re  = pop @{$cur_seq->res};
-            die "unexpected ?\n" unless $cur_re;
-
-            # compose alternation
-            my $nothing = REE::RE::Nothing->new;
-            my $alt_re  = REE::RE::Alternation->new(res => [$nothing, $cur_re]);
-
-            # done
-            push @{$cur_seq->res}, $alt_re;
+            push @{$cur_seq->res}, REE::RE::Repetition->new(%re_options);
         }
 
         # character class

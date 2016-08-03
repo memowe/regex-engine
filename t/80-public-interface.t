@@ -20,7 +20,7 @@ ok $r->match('abcbbcdddde'), "'abcbbcdddde' matches";
 ok ! $r->match('abcbbcddddef'), "'abcbbcddddef' doesn't match";
 
 # canonical regex
-is $r->canonical_regex, '((a((b|(cd*)|)(b|(cd*)|)*)e)|(f*(|((g|h)i))))',
+is $r->canonical_regex, '((a(b|(cd*)|)+e)|(f*((g|h)i)?))',
     'right canonical regex';
 
 __END__
