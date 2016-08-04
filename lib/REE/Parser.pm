@@ -77,8 +77,7 @@ sub _parse_alternation {
         # character class
         # [abc] should be interpreted as (a|b|c)
         elsif ($c eq '[') {
-            my $cur_seq = $sequences[-1];
-            push @{$cur_seq->res}, $self->_parse_character_class;
+            $buffer = $self->_parse_character_class;
         }
 
         # escaped literal
