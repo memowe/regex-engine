@@ -21,7 +21,7 @@ $/;
 
 # test empty regex
 my $empty = REE::RE::Nothing->new;
-my $empty_nfa = $empty->compile();
+my $empty_nfa = $empty->compile;
 isa_ok $empty_nfa, 'REE::NFA', 'got an automaton';
 ok $empty_nfa->is_done, 'empty regex acceptor is done';
 eval {$empty_nfa->consume('a'); fail "didn't die"};
@@ -29,7 +29,7 @@ like $@, qr/^illegal input: 'a'/, 'consuming a literal is illegal';
 
 # test some literals
 my $lit_a = REE::RE::Literal->new(value => 'a');
-my $lit_a_nfa = $lit_a->compile();
+my $lit_a_nfa = $lit_a->compile;
 isa_ok $lit_a_nfa, 'REE::NFA', 'got an automaton';
 ok ! $lit_a_nfa->is_done, 'literal acceptor not done';
 $lit_a_nfa->consume('a');
@@ -42,7 +42,7 @@ isnt $1, $3, 'two different states';
 is $2, 'a', 'accepts only one a input';
 
 my $lit_snow = REE::RE::Literal->new(value => '❤');
-my $lit_snow_nfa = $lit_snow->compile();
+my $lit_snow_nfa = $lit_snow->compile;
 isa_ok $lit_snow_nfa, 'REE::NFA', 'got an automaton';
 ok ! $lit_snow_nfa->is_done, 'literal acceptor not done';
 $lit_snow_nfa->consume('❤');
@@ -64,7 +64,7 @@ $/;
 
 # test a repetition
 my $rep = REE::RE::Repetition->new(re => REE::RE::Literal->new(value => 'a'));
-my $rep_nfa = $rep->compile();
+my $rep_nfa = $rep->compile;
 isa_ok $rep_nfa, 'REE::NFA', 'got an automaton';
 ok $rep_nfa->is_done, 'empty word accepted';
 $rep_nfa->consume('a');
@@ -74,8 +74,8 @@ ok $rep_nfa->is_done, 'aa accepted';
 $rep_nfa->consume('a');
 ok $rep_nfa->is_done, 'aaa accepted';
 eval {$rep_nfa->consume('b'); fail "didn't die"};
-$rep_nfa->init;
 like $@, qr/^illegal input: 'b'/, 'consuming b is illegal';
+$rep_nfa->init;
 ok "$rep_nfa" =~ $repetition_acceptor_rx, 'right repetition acceptor';
 isnt $1, $3, 'two different states';
 is $2, 'a', 'accepts only a';
@@ -123,7 +123,7 @@ my $alt = REE::RE::Alternation->new(res => [
     REE::RE::Literal->new(value => 'a'),
     REE::RE::Literal->new(value => 'b'),
 ]);
-my $alt_nfa = $alt->compile();
+my $alt_nfa = $alt->compile;
 isa_ok $alt_nfa, 'REE::NFA', 'got an automaton';
 ok ! $alt_nfa->is_done, 'alternation acceptor not done';
 $alt_nfa->consume('a');
@@ -152,7 +152,7 @@ my $seq = REE::RE::Sequence->new(res => [
     REE::RE::Literal->new(value => 'a'),
     REE::RE::Literal->new(value => 'b'),
 ]);
-my $seq_nfa = $seq->compile();
+my $seq_nfa = $seq->compile;
 isa_ok $seq_nfa, 'REE::NFA', 'got an automaton';
 ok ! $seq_nfa->is_done, 'sequence acceptor not done';
 $seq_nfa->consume('a');
