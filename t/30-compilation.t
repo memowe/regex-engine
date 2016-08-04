@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use utf8;
 
-use Test::More tests => 48;
+use Test::More tests => 56;
 
 use REE::RE::Literal;
 use REE::RE::Repetition;
@@ -79,6 +79,32 @@ like $@, qr/^illegal input: 'b'/, 'consuming b is illegal';
 ok "$rep_nfa" =~ $repetition_acceptor_rx, 'right repetition acceptor';
 isnt $1, $3, 'two different states';
 is $2, 'a', 'accepts only a';
+
+# test a plus repetition
+my $plus = REE::RE::Repetition->new(
+    re  => REE::RE::Literal->new(value => 'a'),
+    min => 1,
+);
+my $plus_nfa = $plus->compile;
+isa_ok $plus_nfa, 'REE::NFA', 'got an automaton';
+ok ! $plus_nfa->is_done, 'plus acceptor not done';
+$plus_nfa->consume('a');
+ok $plus_nfa->is_done, 'plus acceptor done after consuming "a"';
+$plus_nfa->consume('a');
+ok $plus_nfa->is_done, 'plus acceptor done after consuming "a"';
+
+# test an optional quantification
+my $optional = REE::RE::Repetition->new(
+    re  => REE::RE::Literal->new(value => 'a'),
+    max => 1,
+);
+my $optional_nfa = $optional->compile;
+isa_ok $plus_nfa, 'REE::NFA', 'got an automaton';
+ok $optional_nfa->is_done, 'optional acceptor is done';
+$optional_nfa->consume('a');
+ok $optional_nfa->is_done, 'optional acceptor is done after consuming "a"';
+eval {$optional_nfa->consume('a'); fail "didn't die"};
+like $@, qr/^illegal input: 'a'/, 'consuming another a is illegal';
 
 # how an alternation of two literal acceptors should look like
 my $alternation_acceptor_rx = qr/^[^:]*:

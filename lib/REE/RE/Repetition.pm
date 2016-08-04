@@ -2,6 +2,10 @@ package REE::RE::Repetition;
 use REE::Mo qw(required default);
 extends 'REE::RE';
 
+use REE::RE::Sequence;
+use REE::RE::Alternation;
+use REE::RE::Nothing;
+
 has re  => (required => 1);
 has min => 0;
 has max => 9**9**9; # infinity
@@ -31,5 +35,28 @@ sub to_regex {
 
 sub compile {
     my $self = shift;
-    return $self->re->compile->repetition;
+
+    # star repetition
+    if ($self->min == 0 and $self->max == 9**9**9) {
+        return $self->re->compile->repetition;
+    }
+
+    # plus repetition
+    if ($self->min == 1 and $self->max == 9**9**9) {
+        return REE::RE::Sequence->new(res => [
+            $self->re,
+            REE::RE::Repetition->new(re => $self->re),
+        ])->compile;
+    }
+
+    # optional quantification
+    if ($self->min == 0 and $self->max == 1) {
+        return REE::RE::Alternation->new(res => [
+            REE::RE::Nothing->new,
+            $self->re,
+        ])->compile;
+    }
+
+    # TODO: arbitrary quantification
+    die 'not yet implemented';
 }
