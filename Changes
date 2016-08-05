@@ -1,5 +1,11 @@
 Revision history for REE
 
+0.2     2016-08-05
+        - Character classes support
+        - Plus quantifier support
+        - Optional (?) quantifier support
+        - Arbitrary (a{17,42}) quantifier support
+
 0.1     2016-06-27
         - Basic regex parsing/compilation/matching functionality
         - Basic public interface

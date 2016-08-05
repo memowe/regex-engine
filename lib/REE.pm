@@ -6,7 +6,7 @@ use warnings;
 
 use REE::Parser;
 
-our $VERSION = '0.1';
+our $VERSION = '0.2';
 
 has regex => (required => 1, is => 'ro');
 has '_re';
