@@ -6,9 +6,11 @@ use REE::RE::Sequence;
 use REE::RE::Alternation;
 use REE::RE::Nothing;
 
+our $inf = 9**9**9;
+
 has re  => (required => 1);
 has min => 0;
-has max => 9**9**9; # infinity
+has max => $inf;
 
 sub to_string {
     my ($self, $indent) = @_;
@@ -25,10 +27,10 @@ sub to_regex {
     my $self = shift;
 
     return $self->re->to_regex . (
-          ($self->min == 0 and $self->max == 9**9**9)   ? '*'
-        : ($self->min == 1 and $self->max == 9**9**9)   ? '+'
-        : ($self->min == 0 and $self->max == 1)         ? '?'
-        : ($self->max == 9**9**9)                   ? ('{' . $self->min . ',}')
+          ($self->min == 0 and $self->max == $inf)  ? '*'
+        : ($self->min == 1 and $self->max == $inf)  ? '+'
+        : ($self->min == 0 and $self->max == 1)     ? '?'
+        : ($self->max == $inf)                      ? ('{' . $self->min . ',}')
         : ($self->min == $self->max)                ? ('{' . $self->min . '}')
         : ('{' . $self->min . ',' . $self->max . '}')
     );
@@ -38,12 +40,12 @@ sub compile {
     my $self = shift;
 
     # star repetition
-    if ($self->min == 0 and $self->max == 9**9**9) {
+    if ($self->min == 0 and $self->max == $inf) {
         return $self->re->compile->repetition;
     }
 
     # plus repetition
-    if ($self->min == 1 and $self->max == 9**9**9) {
+    if ($self->min == 1 and $self->max == $inf) {
         return REE::RE::Sequence->new(res => [
             $self->re,
             REE::RE::Repetition->new(re => $self->re),

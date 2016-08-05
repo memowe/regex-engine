@@ -154,7 +154,8 @@ sub _parse_quantification {
     $quant{max} = $quant{min} if $quant{min} ne '' and $part eq 'min';
 
     # minimum quantifier
-    $quant{max} = 9**9**9 if $quant{min} ne '' and $quant{max} eq '';
+    $quant{max} = $REE::RE::Repetition::inf
+        if $quant{min} ne '' and $quant{max} eq '';
 
     # minimum quantifier
     delete $quant{min} if $quant{min} eq '';
