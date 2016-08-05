@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 38;
+use Test::More tests => 42;
 
 use_ok('REE::Parser');
 
@@ -135,6 +135,22 @@ REPETITION (min: 0, max: 1):
     LITERAL: "a"
 END
 is $re->to_regex, 'a?', 'optional quantification regex';
+
+# parse minimum quantification
+$re = $parser->parse('a{17,}');
+is $re->to_string, <<END, 'minimum quantification';
+REPETITION (min: 17, max: inf):
+    LITERAL: "a"
+END
+is $re->to_regex, 'a{17,}', 'minimum quantification regex';
+
+# parse arbitrary quantification
+$re = $parser->parse('a{17,42}');
+is $re->to_string, <<END, 'arbitrary quantification';
+REPETITION (min: 17, max: 42):
+    LITERAL: "a"
+END
+is $re->to_regex, 'a{17,42}', 'arbitrary quantification regex';
 
 # parse simple character class
 $re = $parser->parse('[ab]');
