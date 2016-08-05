@@ -60,6 +60,21 @@ sub compile {
         ])->compile;
     }
 
-    # TODO: arbitrary quantification
-    die 'not yet implemented';
+    # prepare minimum/arbitrary quantification
+    my $seq = REE::RE::Sequence->new;
+    my $re  = $self->re;
+    my $opt = REE::RE::Alternation->new(res => [REE::RE::Nothing->new, $re]);
+    my $rep = REE::RE::Repetition->new(re => $re);
+
+    # minimum quantification
+    if ($self->max == $inf) {
+        push @{$seq->res}, $re for 1 .. $self->min;
+        push @{$seq->res}, $rep;
+        return $seq->compile;
+    }
+
+    # arbitrary (finite) quantification
+    push @{$seq->res}, $re  for 1 .. $self->min;
+    push @{$seq->res}, $opt for $self->min + 1 .. $self->max;
+    return $seq->compile;
 }
