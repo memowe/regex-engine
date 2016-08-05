@@ -28,7 +28,8 @@ sub to_regex {
           ($self->min == 0 and $self->max == 9**9**9)   ? '*'
         : ($self->min == 1 and $self->max == 9**9**9)   ? '+'
         : ($self->min == 0 and $self->max == 1)         ? '?'
-        : ($self->max == 9**9**9) ? ('{' . $self->min . ',}')
+        : ($self->max == 9**9**9)                   ? ('{' . $self->min . ',}')
+        : ($self->min == $self->max)                ? ('{' . $self->min . '}')
         : ('{' . $self->min . ',' . $self->max . '}')
     );
 }
