@@ -227,7 +227,7 @@ END
 is $re->to_regex, '(a|(bc))*', 'nested repetition regex';
 
 # complex nested regex
-$re = $parser->parse('a(b|cd*|)+e|f*([gh]i)?');
+$re = $parser->parse('a(b|(cd*){17}|)+e{3,}|f*([gh]{17,42}i)?');
 is $re->to_string, <<END, 'complex nested';
 ALTERNATION: (
     SEQUENCE: (
@@ -235,30 +235,33 @@ ALTERNATION: (
         REPETITION (min: 1, max: inf):
             ALTERNATION: (
                 LITERAL: "b"
-                SEQUENCE: (
-                    LITERAL: "c"
-                    REPETITION (min: 0, max: inf):
-                        LITERAL: "d"
-                )
+                REPETITION (min: 17, max: 17):
+                    SEQUENCE: (
+                        LITERAL: "c"
+                        REPETITION (min: 0, max: inf):
+                            LITERAL: "d"
+                    )
                 NOTHING
             )
-        LITERAL: "e"
+        REPETITION (min: 3, max: inf):
+            LITERAL: "e"
     )
     SEQUENCE: (
         REPETITION (min: 0, max: inf):
             LITERAL: "f"
         REPETITION (min: 0, max: 1):
             SEQUENCE: (
-                ALTERNATION: (
-                    LITERAL: "g"
-                    LITERAL: "h"
-                )
+                REPETITION (min: 17, max: 42):
+                    ALTERNATION: (
+                        LITERAL: "g"
+                        LITERAL: "h"
+                    )
                 LITERAL: "i"
             )
     )
 )
 END
-is $re->to_regex, '((a(b|(cd*)|)+e)|(f*((g|h)i)?))',
+is $re->to_regex, '((a(b|(cd*){17}|)+e{3,})|(f*((g|h){17,42}i)?))',
     'complex nested regex';
 
 __END__
