@@ -15,7 +15,7 @@ sub to_string {
     $indent //= '';
 
     my $output = $indent . 'REPETITION (';
-    $output .= join ', ' => map {"$_: " . $self->$_} qw(min max);
+    $output .= join ', ' => map {"$_: " . ($self->$_ // '')} qw(min max);
     $output .= "):\n";
     $output .= $self->re->to_string("$indent    ");
     return $output;
