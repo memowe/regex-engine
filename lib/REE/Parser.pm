@@ -63,7 +63,7 @@ sub _parse_alternation {
             # get previous re
             my $cur_seq = $sequences[-1]; # exists always
             my $cur_re  = pop @{$cur_seq->res};
-            die "unexpected *\n" unless $cur_re;
+            die "unexpected $c\n" unless $cur_re;
 
             # quantification
             my %re_options      = (re => $cur_re);
