@@ -38,13 +38,13 @@ sub _parse_alternation {
     my $self = shift;
 
     # parse sequences
-    my @sequences = (REE::RE::Sequence->new(res => []));
+    my @sequences = (REE::RE::Sequence->new);
     while (defined(my $c = $self->_next_char)) {
         my $buffer;
 
         # new alternative
         if ($c eq '|') {
-            push @sequences, REE::RE::Sequence->new(res => []);
+            push @sequences, REE::RE::Sequence->new;
         }
 
         # sub-alternation
@@ -57,61 +57,42 @@ sub _parse_alternation {
             last;
         }
 
-        # repetition of previous re
-        elsif ($c eq '*') {
+        # repetitions
+        elsif ($c eq '*' or $c eq '+' or $c eq '?') {
 
             # get previous re
             my $cur_seq = $sequences[-1]; # exists always
             my $cur_re  = pop @{$cur_seq->res};
-            die "unexpected *\n" unless $cur_re;
+            die "unexpected $c\n" unless $cur_re;
+
+            # quantification
+            my %re_options      = (re => $cur_re);
+            $re_options{min}    = 1 if $c eq '+';
+            $re_options{max}    = 1 if $c eq '?';
 
             # inject repeated re
-            push @{$cur_seq->res}, REE::RE::Repetition->new(re => $cur_re);
+            push @{$cur_seq->res}, REE::RE::Repetition->new(%re_options);
         }
 
-        # "plus" repetition of previous re:
-        # (REGEX)+ should be interpreted as REGEX(REGEX)*
-        elsif ($c eq '+') {
+        # arbitrary repetition
+        elsif ($c eq '{') {
+
+            # fetch min, max
+            my $q = $self->_parse_quantification;
 
             # get previous re
-            my $cur_seq = $sequences[-1];
-            die "unexpected +\n" unless $cur_seq;
+            my $cur_seq = $sequences[-1]; # exists always
             my $cur_re  = pop @{$cur_seq->res};
-            die "unexpected +\n" unless $cur_re;
+            die "unexpected {\n" unless $cur_re;
 
-            # compose repetition
-            my $one_re  = $cur_re;
-            my $rep_re  = REE::RE::Repetition->new(re => $cur_re);
-            my $plus_re = REE::RE::Sequence->new(res => [$one_re, $rep_re]);
-
-
-            # done
-            push @{$cur_seq->res}, $plus_re;
-        }
-
-        # "optional" quantification of previous re:
-        # (REGEX)? should be interpreted as (|REGEX)
-        elsif ($c eq '?') {
-
-            # get previous re
-            my $cur_seq = $sequences[-1];
-            die "unexpected ?\n" unless $cur_seq;
-            my $cur_re  = pop @{$cur_seq->res};
-            die "unexpected ?\n" unless $cur_re;
-
-            # compose alternation
-            my $nothing = REE::RE::Nothing->new;
-            my $alt_re  = REE::RE::Alternation->new(res => [$nothing, $cur_re]);
-
-            # done
-            push @{$cur_seq->res}, $alt_re;
+            # inject repeated re
+            push @{$cur_seq->res}, REE::RE::Repetition->new(re => $cur_re, %$q);
         }
 
         # character class
         # [abc] should be interpreted as (a|b|c)
         elsif ($c eq '[') {
-            my $cur_seq = $sequences[-1];
-            push @{$cur_seq->res}, $self->_parse_character_class;
+            $buffer = $self->_parse_character_class;
         }
 
         # escaped literal
@@ -137,6 +118,50 @@ sub _parse_alternation {
 
     # collect sequences
     return REE::RE::Alternation->new(res => \@sequences)->simplified;
+}
+
+sub _parse_quantification {
+    my $self = shift;
+
+    # parse min and max
+    my %quant   = (min => '', max => '');
+    my $part    = 'min';
+    while (defined(my $c = $self->_next_char)) {
+
+        # append digit to quantifier part
+        if (grep {$_ eq $c} 0..9) {
+            $quant{$part} .= $c;
+            next;
+        }
+
+        # switch quantifier part
+        if ($c eq ',') {
+            $part = 'max';
+            next;
+        }
+
+        # end of quantifier
+        last if $c eq '}';
+
+        # illegal quantifier part
+        die "illegal quantifier part: $c";
+    }
+
+    # empty quantifier
+    die 'empty quantifier' if $quant{min} eq '' and $quant{max} eq '';
+
+    # exact quantifier
+    $quant{max} = $quant{min} if $quant{min} ne '' and $part eq 'min';
+
+    # minimum quantifier
+    $quant{max} = $REE::RE::Repetition::inf
+        if $quant{min} ne '' and $quant{max} eq '';
+
+    # minimum quantifier
+    delete $quant{min} if $quant{min} eq '';
+
+    # done
+    return \%quant;
 }
 
 sub _parse_character_class {

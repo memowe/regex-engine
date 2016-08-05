@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 38;
+use Test::More tests => 44;
 
 use_ok('REE::Parser');
 
@@ -115,7 +115,7 @@ is $re->to_regex, '(|a|b||)', 'multi-empty alternation regex';
 # parse simple repetition
 $re = $parser->parse('a*');
 is $re->to_string, <<END, 'simple repetition';
-REPETITION:
+REPETITION (min: 0, max: inf):
     LITERAL: "a"
 END
 is $re->to_regex, 'a*', 'simple repetition regex';
@@ -123,23 +123,42 @@ is $re->to_regex, 'a*', 'simple repetition regex';
 # parse simple plus repetition
 $re = $parser->parse('a+');
 is $re->to_string, <<END, 'plus repetition';
-SEQUENCE: (
+REPETITION (min: 1, max: inf):
     LITERAL: "a"
-    REPETITION:
-        LITERAL: "a"
-)
 END
-is $re->to_regex, '(aa*)', 'plus repetition regex';
+is $re->to_regex, 'a+', 'plus repetition regex';
 
 # parse simple optional quantification
 $re = $parser->parse('a?');
 is $re->to_string, <<END, 'optional quantification';
-ALTERNATION: (
-    NOTHING
+REPETITION (min: 0, max: 1):
     LITERAL: "a"
-)
 END
-is $re->to_regex, '(|a)', 'optional quantification regex';
+is $re->to_regex, 'a?', 'optional quantification regex';
+
+# parse exact quantification
+$re = $parser->parse('a{5}');
+is $re->to_string, <<END, 'exact quantification';
+REPETITION (min: 5, max: 5):
+    LITERAL: "a"
+END
+is $re->to_regex, 'a{5}', 'exact quantification';
+
+# parse minimum quantification
+$re = $parser->parse('a{17,}');
+is $re->to_string, <<END, 'minimum quantification';
+REPETITION (min: 17, max: inf):
+    LITERAL: "a"
+END
+is $re->to_regex, 'a{17,}', 'minimum quantification regex';
+
+# parse arbitrary quantification
+$re = $parser->parse('a{17,42}');
+is $re->to_string, <<END, 'arbitrary quantification';
+REPETITION (min: 17, max: 42):
+    LITERAL: "a"
+END
+is $re->to_regex, 'a{17,42}', 'arbitrary quantification regex';
 
 # parse simple character class
 $re = $parser->parse('[ab]');
@@ -168,7 +187,7 @@ $re = $parser->parse('ab*(c|d)');
 is $re->to_string, <<END, 'nested sequence';
 SEQUENCE: (
     LITERAL: "a"
-    REPETITION:
+    REPETITION (min: 0, max: inf):
         LITERAL: "b"
     ALTERNATION: (
         LITERAL: "c"
@@ -187,7 +206,7 @@ ALTERNATION: (
         LITERAL: "b"
         LITERAL: "c"
     )
-    REPETITION:
+    REPETITION (min: 0, max: inf):
         LITERAL: "d"
 )
 END
@@ -196,7 +215,7 @@ is $re->to_regex, '(a|(bc)|d*)', 'nested alternation regex';
 # parse nested repetition
 $re = $parser->parse('(a|bc)*');
 is $re->to_string, <<END, 'nested repetition';
-REPETITION:
+REPETITION (min: 0, max: inf):
     ALTERNATION: (
         LITERAL: "a"
         SEQUENCE: (
@@ -208,51 +227,41 @@ END
 is $re->to_regex, '(a|(bc))*', 'nested repetition regex';
 
 # complex nested regex
-$re = $parser->parse('a(b|cd*|)+e|f*([gh]i)?');
+$re = $parser->parse('a(b|(cd*){17}|)+e{3,}|f*([gh]{17,42}i)?');
 is $re->to_string, <<END, 'complex nested';
 ALTERNATION: (
     SEQUENCE: (
         LITERAL: "a"
-        SEQUENCE: (
+        REPETITION (min: 1, max: inf):
             ALTERNATION: (
                 LITERAL: "b"
-                SEQUENCE: (
-                    LITERAL: "c"
-                    REPETITION:
-                        LITERAL: "d"
-                )
-                NOTHING
-            )
-            REPETITION:
-                ALTERNATION: (
-                    LITERAL: "b"
+                REPETITION (min: 17, max: 17):
                     SEQUENCE: (
                         LITERAL: "c"
-                        REPETITION:
+                        REPETITION (min: 0, max: inf):
                             LITERAL: "d"
                     )
-                    NOTHING
-                )
-        )
-        LITERAL: "e"
+                NOTHING
+            )
+        REPETITION (min: 3, max: inf):
+            LITERAL: "e"
     )
     SEQUENCE: (
-        REPETITION:
+        REPETITION (min: 0, max: inf):
             LITERAL: "f"
-        ALTERNATION: (
-            NOTHING
+        REPETITION (min: 0, max: 1):
             SEQUENCE: (
-                ALTERNATION: (
-                    LITERAL: "g"
-                    LITERAL: "h"
-                )
+                REPETITION (min: 17, max: 42):
+                    ALTERNATION: (
+                        LITERAL: "g"
+                        LITERAL: "h"
+                    )
                 LITERAL: "i"
             )
-        )
     )
 )
 END
-is $re->to_regex, '((a((b|(cd*)|)(b|(cd*)|)*)e)|(f*(|((g|h)i))))',
+is $re->to_regex, '((a(b|(cd*){17}|)+e{3,})|(f*((g|h){17,42}i)?))',
     'complex nested regex';
 
 __END__

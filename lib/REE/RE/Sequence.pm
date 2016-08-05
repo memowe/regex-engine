@@ -1,10 +1,10 @@
 package REE::RE::Sequence;
-use REE::Mo 'required';
+use REE::Mo 'default';
 extends 'REE::RE';
 
 use REE::RE::Nothing;
 
-has res => (required => 1);
+has res => [];
 
 sub to_string {
     my ($self, $indent) = @_;
