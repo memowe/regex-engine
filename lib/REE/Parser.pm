@@ -124,42 +124,40 @@ sub _parse_quantification {
     my $self = shift;
 
     # parse min and max
-    my @quant   = ();
-    my $part    = 0;
-    my $buffer  = '';
+    my %quant   = (min => '', max => '');
+    my $part    = 'min';
     while (defined(my $c = $self->_next_char)) {
 
         # append digit to quantifier part
         if (grep {$_ eq $c} 0..9) {
-            $buffer .= $c;
+            $quant{$part} .= $c;
             next;
         }
 
         # switch quantifier part
         if ($c eq ',') {
-            $quant[$part]   = $buffer eq '' ? undef : $buffer;
-            $buffer         = '';
-            $part++;
+            $part = 'max';
             next;
         }
 
         # end of quantifier
-        if ($c eq '}') {
-            $quant[$part] = $buffer eq '' ? undef : $buffer;
-            last;
-        }
+        last if $c eq '}';
 
         # illegal quantifier part
         die "illegal quantifier part: $c";
     }
 
-    # build quantifier hash
-    my %quant;
-    $quant{min} = $quant[0] if defined $quant[0];
-    $quant{max} = $quant[1] if defined $quant[1];
+    # empty quantifier
+    die 'empty quantifier' if $quant{min} eq '' and $quant{max} eq '';
 
-    # test for empty quantifier
-    die "empty quantifier" unless %quant;
+    # exact quantifier
+    $quant{max} = $quant{min} if $quant{min} ne '' and $part eq 'min';
+
+    # minimum quantifier
+    $quant{max} = 9**9**9 if $quant{min} ne '' and $quant{max} eq '';
+
+    # minimum quantifier
+    delete $quant{min} if $quant{min} eq '';
 
     # done
     return \%quant;
