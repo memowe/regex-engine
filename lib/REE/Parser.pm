@@ -74,6 +74,21 @@ sub _parse_alternation {
             push @{$cur_seq->res}, REE::RE::Repetition->new(%re_options);
         }
 
+        # arbitrary repetition
+        elsif ($c eq '{') {
+
+            # fetch min, max
+            my $q = $self->_parse_quantification;
+
+            # get previous re
+            my $cur_seq = $sequences[-1]; # exists always
+            my $cur_re  = pop @{$cur_seq->res};
+            die "unexpected {\n" unless $cur_re;
+
+            # inject repeated re
+            push @{$cur_seq->res}, REE::RE::Repetition->new(re => $cur_re, %$q);
+        }
+
         # character class
         # [abc] should be interpreted as (a|b|c)
         elsif ($c eq '[') {
@@ -103,6 +118,51 @@ sub _parse_alternation {
 
     # collect sequences
     return REE::RE::Alternation->new(res => \@sequences)->simplified;
+}
+
+sub _parse_quantification {
+    my $self = shift;
+
+    # parse min and max
+    my @quant   = ();
+    my $part    = 0;
+    my $buffer  = '';
+    while (defined(my $c = $self->_next_char)) {
+
+        # append digit to quantifier part
+        if (grep {$_ eq $c} 0..9) {
+            $buffer .= $c;
+            next;
+        }
+
+        # switch quantifier part
+        if ($c eq ',') {
+            $quant[$part]   = $buffer eq '' ? undef : $buffer;
+            $buffer         = '';
+            $part++;
+            next;
+        }
+
+        # end of quantifier
+        if ($c eq '}') {
+            $quant[$part] = $buffer eq '' ? undef : $buffer;
+            last;
+        }
+
+        # illegal quantifier part
+        die "illegal quantifier part: $c";
+    }
+
+    # build quantifier hash
+    my %quant;
+    $quant{min} = $quant[0] if defined $quant[0];
+    $quant{max} = $quant[1] if defined $quant[1];
+
+    # test for empty quantifier
+    die "empty quantifier" unless %quant;
+
+    # done
+    return \%quant;
 }
 
 sub _parse_character_class {
