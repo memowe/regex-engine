@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use utf8;
 
-use Test::More tests => 73;
+use Test::More tests => 72;
 
 use REE::RE::Literal;
 use REE::RE::Repetition;
@@ -217,21 +217,25 @@ is $1, 'a', 'right input';
 is $4, 'b', 'right input';
 
 # compile complex nested regex
-my $complex_nfa = REE::Parser->new->parse('a(b|cd*)*e|f*g')->compile;
-ok ! $complex_nfa->is_done, 'complex nfa not done';
-$complex_nfa->consume_string('g');
-ok $complex_nfa->is_done, 'input "g" accepted';
-$complex_nfa->init->consume_string('ffffg');
-ok $complex_nfa->is_done, 'input "ffffg" accepted';
-$complex_nfa->init->consume_string('ffff');
-ok ! $complex_nfa->is_done, 'input "ffff" not accepted';
-$complex_nfa->init->consume_string('ae');
-ok $complex_nfa->is_done, 'input "ae" accepted';
-$complex_nfa->init->consume_string('abcbce');
-ok $complex_nfa->is_done, 'input "abcbce" accepted';
-$complex_nfa->init->consume_string('abcbbcdddde');
-ok $complex_nfa->is_done, 'input "abcbbcdddde" accepted';
-eval {$complex_nfa->init->consume_string('abcbbcddddef'); fail "didn't die"};
-like $@, qr/^illegal input: 'f'/, 'input "abcbbcddddef" not accepted';
+my $complex_nfa = REE::Parser->new->parse(
+    'a(b|(cd*){17}|)+e{3,}|f*([gh]{17,42}i)?'
+)->compile;
+ok $complex_nfa->is_done, 'complex nfa is done';
+$complex_nfa->consume_string('gggghhhhghghhghghi');
+ok $complex_nfa->is_done, 'input "gggghhhhghghhghghi" accepted';
+$complex_nfa->init->consume_string('aee');
+ok ! $complex_nfa->is_done, 'input "aee" not accepted';
+$complex_nfa->init->consume_string('aeee');
+ok $complex_nfa->is_done, 'input "aeee" not accepted';
+$complex_nfa->init->consume_string('abeeeee');
+ok $complex_nfa->is_done, 'input "abeeeee" accepted';
+$complex_nfa->init->consume_string('abbccccccccdddcccccccccdeee');
+ok $complex_nfa->is_done, 'input "abbccccccccdddccccccccccdeee" accepted';
+eval {
+    $complex_nfa->init->consume_string('abbccccccccdddccccccccdeee');
+    fail "didn't die"
+};
+like $@, qr/^illegal input: 'e'/,
+    'input "abbccccccccdddccccccccdeee" not accepted';
 
 __END__
