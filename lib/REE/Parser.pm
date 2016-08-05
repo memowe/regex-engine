@@ -38,13 +38,13 @@ sub _parse_alternation {
     my $self = shift;
 
     # parse sequences
-    my @sequences = (REE::RE::Sequence->new(res => []));
+    my @sequences = (REE::RE::Sequence->new);
     while (defined(my $c = $self->_next_char)) {
         my $buffer;
 
         # new alternative
         if ($c eq '|') {
-            push @sequences, REE::RE::Sequence->new(res => []);
+            push @sequences, REE::RE::Sequence->new;
         }
 
         # sub-alternation
