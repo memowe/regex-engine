@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 
-use Test::More tests => 42;
+use Test::More tests => 44;
 
 use_ok('REE::Parser');
 
@@ -135,6 +135,14 @@ REPETITION (min: 0, max: 1):
     LITERAL: "a"
 END
 is $re->to_regex, 'a?', 'optional quantification regex';
+
+# parse exact quantification
+$re = $parser->parse('a{5}');
+is $re->to_string, <<END, 'exact quantification';
+REPETITION (min: 5, max: 5):
+    LITERAL: "a"
+END
+is $re->to_regex, 'a{5}', 'exact quantification';
 
 # parse minimum quantification
 $re = $parser->parse('a{17,}');
