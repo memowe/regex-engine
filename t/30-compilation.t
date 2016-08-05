@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use utf8;
 
-use Test::More tests => 56;
+use Test::More tests => 73;
 
 use REE::RE::Literal;
 use REE::RE::Repetition;
@@ -105,6 +105,58 @@ $optional_nfa->consume('a');
 ok $optional_nfa->is_done, 'optional acceptor is done after consuming "a"';
 eval {$optional_nfa->consume('a'); fail "didn't die"};
 like $@, qr/^illegal input: 'a'/, 'consuming another a is illegal';
+
+# test an exact quantification
+my $exact_q = REE::RE::Repetition->new(
+ re => REE::RE::Literal->new(value => 'a'),
+ min => 2,
+ max => 2,
+);
+my $exact_q_nfa = $exact_q->compile;
+isa_ok $plus_nfa, 'REE::NFA', 'got an automaton';
+ok ! $exact_q_nfa->is_done, 'exact acceptor not done';
+$exact_q_nfa->consume('a');
+ok ! $exact_q_nfa->is_done, 'exact acceptor still not done';
+$exact_q_nfa->consume('a');
+ok $exact_q_nfa->is_done, 'exact acceptor is done with "aa"';
+eval {$exact_q_nfa->consume('a'); fail "didn't die"};
+like $@, qr/^illegal input: 'a'/, 'consuming "aaa" is illegal';
+
+# test an arbitrary quantification
+my $arbitrary_q = REE::RE::Repetition->new(
+    re => REE::RE::Literal->new(value => 'a'),
+    min => 2,
+    max => 3,
+);
+my $arbitrary_q_nfa = $arbitrary_q->compile;
+isa_ok $plus_nfa, 'REE::NFA', 'got an automaton';
+ok ! $arbitrary_q_nfa->is_done, 'arbitrary acceptor not done';
+$arbitrary_q_nfa->consume('a');
+ok ! $arbitrary_q_nfa->is_done, 'arbitrary acceptor still not done';
+$arbitrary_q_nfa->consume('a');
+ok $arbitrary_q_nfa->is_done, 'arbitrary acceptor is done with "aa"';
+$arbitrary_q_nfa->consume('a');
+ok $arbitrary_q_nfa->is_done, 'arbitrary acceptor is done with "aaa"';
+eval {$arbitrary_q_nfa->consume('a'); fail "didn't die"};
+like $@, qr/^illegal input: 'a'/, 'consuming "aaaa" is illegal';
+
+# test a minimum quantification
+my $minimum_q = REE::RE::Repetition->new(
+    re => REE::RE::Literal->new(value => 'a'),
+    min => 2,
+);
+my $minimum_q_nfa = $minimum_q->compile;
+isa_ok $plus_nfa, 'REE::NFA', 'got an automaton';
+ok ! $minimum_q_nfa->is_done, 'minimum acceptor not done';
+$minimum_q_nfa->consume('a');
+ok ! $minimum_q_nfa->is_done, 'minimum acceptor still not done';
+$minimum_q_nfa->consume('a');
+ok $minimum_q_nfa->is_done, 'minimum acceptor is done with "aa"';
+$minimum_q_nfa->consume('a');
+ok $minimum_q_nfa->is_done, 'minimum acceptor is done with "aaa"';
+my $as = 'a' x (17 + rand 42);
+$minimum_q_nfa->consume_string($as);
+ok $minimum_q_nfa->is_done, "minimum acceptor is done with \"$as\"";
 
 # how an alternation of two literal acceptors should look like
 my $alternation_acceptor_rx = qr/^[^:]*:
