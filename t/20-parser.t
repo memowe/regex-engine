@@ -115,7 +115,7 @@ is $re->to_regex, '(|a|b||)', 'multi-empty alternation regex';
 # parse simple repetition
 $re = $parser->parse('a*');
 is $re->to_string, <<END, 'simple repetition';
-REPETITION (min: 0, max: inf):
+REPETITION (min: 0, max: oo):
     LITERAL: "a"
 END
 is $re->to_regex, 'a*', 'simple repetition regex';
@@ -123,7 +123,7 @@ is $re->to_regex, 'a*', 'simple repetition regex';
 # parse simple plus repetition
 $re = $parser->parse('a+');
 is $re->to_string, <<END, 'plus repetition';
-REPETITION (min: 1, max: inf):
+REPETITION (min: 1, max: oo):
     LITERAL: "a"
 END
 is $re->to_regex, 'a+', 'plus repetition regex';
@@ -147,7 +147,7 @@ is $re->to_regex, 'a{5}', 'exact quantification';
 # parse minimum quantification
 $re = $parser->parse('a{17,}');
 is $re->to_string, <<END, 'minimum quantification';
-REPETITION (min: 17, max: inf):
+REPETITION (min: 17, max: oo):
     LITERAL: "a"
 END
 is $re->to_regex, 'a{17,}', 'minimum quantification regex';
@@ -187,7 +187,7 @@ $re = $parser->parse('ab*(c|d)');
 is $re->to_string, <<END, 'nested sequence';
 SEQUENCE: (
     LITERAL: "a"
-    REPETITION (min: 0, max: inf):
+    REPETITION (min: 0, max: oo):
         LITERAL: "b"
     ALTERNATION: (
         LITERAL: "c"
@@ -206,7 +206,7 @@ ALTERNATION: (
         LITERAL: "b"
         LITERAL: "c"
     )
-    REPETITION (min: 0, max: inf):
+    REPETITION (min: 0, max: oo):
         LITERAL: "d"
 )
 END
@@ -215,7 +215,7 @@ is $re->to_regex, '(a|(bc)|d*)', 'nested alternation regex';
 # parse nested repetition
 $re = $parser->parse('(a|bc)*');
 is $re->to_string, <<END, 'nested repetition';
-REPETITION (min: 0, max: inf):
+REPETITION (min: 0, max: oo):
     ALTERNATION: (
         LITERAL: "a"
         SEQUENCE: (
@@ -232,22 +232,22 @@ is $re->to_string, <<END, 'complex nested';
 ALTERNATION: (
     SEQUENCE: (
         LITERAL: "a"
-        REPETITION (min: 1, max: inf):
+        REPETITION (min: 1, max: oo):
             ALTERNATION: (
                 LITERAL: "b"
                 REPETITION (min: 17, max: 17):
                     SEQUENCE: (
                         LITERAL: "c"
-                        REPETITION (min: 0, max: inf):
+                        REPETITION (min: 0, max: oo):
                             LITERAL: "d"
                     )
                 NOTHING
             )
-        REPETITION (min: 3, max: inf):
+        REPETITION (min: 3, max: oo):
             LITERAL: "e"
     )
     SEQUENCE: (
-        REPETITION (min: 0, max: inf):
+        REPETITION (min: 0, max: oo):
             LITERAL: "f"
         REPETITION (min: 0, max: 1):
             SEQUENCE: (

@@ -12,12 +12,20 @@ has re  => (required => 1);
 has min => 0;
 has max => $inf;
 
+sub max_str {
+    my $c = shift;
+    return $c->max == $inf ? 'oo' : $c->max;
+}
+
 sub to_string {
     my ($self, $indent) = @_;
     $indent //= '';
 
     my $output = $indent . 'REPETITION (';
-    $output .= join ', ' => map {"$_: " . ($self->$_ // '')} qw(min max);
+    $output .= join ', ' => map {
+        my $getter = $_ eq 'max' ? 'max_str' : $_;
+        "$_: " . ($self->$getter // '')
+    } qw(min max);
     $output .= "):\n";
     $output .= $self->re->to_string("$indent    ");
     return $output;
@@ -32,7 +40,7 @@ sub to_regex {
         : ($self->min == 0 and $self->max == 1)     ? '?'
         : ($self->max == $inf)                      ? ('{' . $self->min . ',}')
         : ($self->min == $self->max)                ? ('{' . $self->min . '}')
-        : ('{' . $self->min . ',' . $self->max . '}')
+        : ('{' . $self->min . ',' . $self->max_str . '}')
     );
 }
 
