@@ -1,5 +1,4 @@
-REE - Regular Expression Engine
-===============================
+# REE - Regular Expression Engine [![Build Status](https://travis-ci.org/memowe/regex-engine.svg?branch=master)](https://travis-ci.org/memowe/regex-engine)
 
 This is a toy project to get a better understanding of how regular expression
 engines work. REE can build parse trees and compile working NFA representations
