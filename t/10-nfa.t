@@ -2,7 +2,6 @@
 
 use strict;
 use warnings;
-use experimental 'smartmatch';
 use utf8;
 
 use Test::More tests => 79;
@@ -155,8 +154,8 @@ is $nfa->current_state, $nfa_start, 'right start state';
 $nfa->consume('a');
 my @states = $nfa->current_states;
 is scalar @states, 2, 'nfa is in two states at the same time';
-ok $nfa_start ~~ @states, 'start state is current';
-ok $nfa_end ~~ @states, 'end state is current';
+ok scalar grep($nfa_start eq $_ => @states), 'start state is current';
+ok scalar grep($nfa_end eq $_ => @states), 'end state is current';
 ok $nfa->is_done, 'one state is final';
 is "$nfa", <<"END", 'right finalized nfa';
 trivial nfa:
@@ -191,8 +190,8 @@ $enfa->consume_string('a');
 ok $enfa->is_done, 'enfa-parsed a string successfully';
 @states = $enfa->current_states;
 is scalar @states, 2, 'enfa is in two states at the same time';
-ok $enfa_next ~~ @states, 'intermediate state is current';
-ok $enfa_final ~~ @states, 'final state is current';
+ok scalar grep($enfa_next eq $_ => @states), 'intermediate state is current';
+ok scalar grep($enfa_final eq $_ => @states), 'final state is current';
 is "$enfa", <<"END", 'right multi-current stringification';
 trivial ε-nfa:
 $enfa_start (start):
