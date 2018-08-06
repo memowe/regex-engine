@@ -7,18 +7,20 @@ interface.
 
 ## Usage Example
 
-    use feature 'say';
-    use REE;
+```perl
+use feature 'say';
+use REE;
 
-    # matching
-    my $ree     = REE->new(regex => '(foo|bar)*baz');
-    my $string  = "foobarbaz";
-    say "$string matches" if $ree->match($string);
+# matching
+my $ree     = REE->new(regex => '(foo|bar)*baz');
+my $string  = "foobarbaz";
+say "$string matches" if $ree->match($string);
 
-    # meta information
-    say 'canonical regex: ' . $ree->canonical_regex;
-    say 'NFA representation: ';
-    say $ree->nfa_representation;
+# meta information
+say 'canonical regex: ' . $ree->canonical_regex;
+say 'NFA representation: ';
+say $ree->nfa_representation;
+```
 
 ## Web Interface
 
